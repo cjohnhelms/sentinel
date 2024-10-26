@@ -1,4 +1,4 @@
-module watchdog
+module sentinel
 
 go 1.23.0
 
