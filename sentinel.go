@@ -3,6 +3,7 @@ package main
 import (
 	"sentinel/notify"
 	"sentinel/scraper"
+	"sentinel/ui"
 )
 
 //"8178452177@vtext.com"
@@ -13,6 +14,7 @@ func main() {
 	ch := make(chan []scraper.Event, 1)
 	go scraper.FetchEvents(ch)
 	go notify.Notify(ch, recipients)
+	go ui.Update(ch)
 
 	select {}
 }
