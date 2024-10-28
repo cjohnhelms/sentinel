@@ -13,7 +13,7 @@ func Update(ch <-chan []scraper.Event) {
 		now := time.Now()
 
 		// Calculate the next 2 PM
-		next2PM := time.Date(now.Year(), now.Month(), now.Day(), 17, 50, 0, 0, now.Location())
+		next2PM := time.Date(now.Year(), now.Month(), now.Day(), 2, 0, 0, 0, now.Location())
 		if now.After(next2PM) {
 			// If it’s already past 2 PM, schedule it for the next day
 			next2PM = next2PM.Add(24 * time.Hour)

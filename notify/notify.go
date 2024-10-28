@@ -35,7 +35,7 @@ func Notify(ch <-chan []scraper.Event, recipients [1]string) {
 		now := time.Now()
 
 		// Calculate the next 2 PM
-		next2PM := time.Date(now.Year(), now.Month(), now.Day(), 13, 10, 0, 0, now.Location())
+		next2PM := time.Date(now.Year(), now.Month(), now.Day(), 14, 0, 0, 0, now.Location())
 		if now.After(next2PM) {
 			// If it’s already past 2 PM, schedule it for the next day
 			next2PM = next2PM.Add(24 * time.Hour)
