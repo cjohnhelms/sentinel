@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/smtp"
-	"sentinel/scraper"
+	"sentinel/pkg/scraper"
 	"time"
 )
 
@@ -29,7 +29,7 @@ func SendMail(body string, recipient string) error {
 	return nil
 }
 
-func Notify(ch <-chan []scraper.Event, recipients [1]string) {
+func Notify(ch <-chan []scraper.Event, recipients [2]string) {
 	for {
 		// Get the current time
 		now := time.Now()
