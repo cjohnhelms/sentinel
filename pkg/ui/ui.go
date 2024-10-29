@@ -3,7 +3,7 @@ package ui
 import (
 	"github.com/pterm/pterm"
 	"github.com/pterm/pterm/putils"
-	"sentinel/scraper"
+	"sentinel/pkg/scraper"
 	"time"
 )
 
