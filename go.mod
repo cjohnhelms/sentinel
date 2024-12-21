@@ -4,6 +4,7 @@ go 1.23.0
 
 require (
 	github.com/gocolly/colly v1.2.0
+	github.com/mskrha/rpi-lcd v0.0.0-20201213150335-131bf4c0550a
 	github.com/twilio/twilio-go v1.23.5
 )
 
@@ -17,9 +18,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
 	github.com/golang/protobuf v1.5.4 // indirect
-	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/kennygrant/sanitize v1.2.4 // indirect
-	github.com/mskrha/rpi-lcd v0.0.0-20201213150335-131bf4c0550a // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/saintfish/chardet v0.0.0-20230101081208-5e3ef4b5456d // indirect
 	github.com/stretchr/testify v1.9.0 // indirect
