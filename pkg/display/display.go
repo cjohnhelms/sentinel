@@ -20,20 +20,23 @@ func Write(event scraper.Event) {
 		log.Println("screen update failure:", err)
 	}
 
-	var i int
-	var max = len(event.Title) - 15
-	for {
-		if err := screen.Print(1, 0, event.Title); err != nil {
-			log.Println("screen update failure:", err)
-		}
-		time.Sleep(600 * time.Millisecond)
-		i++
-		if i == max {
-			i = 0
-			time.Sleep(2 * time.Second)
+	if len(event.Title) <= 16 {
+		screen.Print(1, 0, event.Title)
+	} else {
+		for {
+			var i int
+			var max = len(event.Title) - 15
+			if err := screen.Print(1, 0, event.Title); err != nil {
+				log.Println("screen update failure:", err)
+			}
+			time.Sleep(600 * time.Millisecond)
+			i++
+			if i == max {
+				i = 0
+				time.Sleep(2 * time.Second)
+			}
 		}
 	}
-
 }
 
 func Update(ch <-chan scraper.Event) {
