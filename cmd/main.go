@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"os"
+	"sentinel/pkg/display"
 	"sentinel/pkg/notify"
 	"sentinel/pkg/scraper"
 	"time"
@@ -15,6 +16,7 @@ func main() {
 	ch := make(chan scraper.Event, 1)
 	go scraper.FetchEvents(ch)
 	go notify.Notify(ch, recipients)
+	go display.Update(ch)
 
 	test1 := scraper.Event{
 		Title: "short title",
