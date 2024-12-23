@@ -41,21 +41,21 @@ func Write(event scraper.Event) {
 
 func Update(ch <-chan scraper.Event) {
 	for {
-		// Get the current time
-		now := time.Now()
+		//// Get the current time
+		//now := time.Now()
 
-		// Calculate the next 2 PM
-		nextUpdate := time.Date(now.Year(), now.Month(), now.Day(), 3, 0, 0, 0, now.Location())
-		if now.After(nextUpdate) {
-			// If it’s already past 2 PM, schedule it for the next day
-			nextUpdate = nextUpdate.Add(24 * time.Hour)
-		}
+		//// Calculate the next 2 PM
+		//nextUpdate := time.Date(now.Year(), now.Month(), now.Day(), 3, 0, 0, 0, now.Location())
+		//if now.After(nextUpdate) {
+		//	// If it’s already past 2 PM, schedule it for the next day
+		//	nextUpdate = nextUpdate.Add(24 * time.Hour)
+		//}
 
-		// Calculate the duration until the next 2 PM
-		duration := nextUpdate.Sub(now)
+		//// Calculate the duration until the next 2 PM
+		//duration := nextUpdate.Sub(now)
 
-		// Sleep until the next 2 PM
-		time.Sleep(duration)
+		//// Sleep until the next 2 PM
+		//time.Sleep(duration)
 
 		select {
 		case data := <-ch:
