@@ -26,7 +26,7 @@ func Write(event scraper.Event) {
 		var i int
 		var max = len(event.Title) - 15
 		for {
-			if err := screen.Print(1, 0, event.Title); err != nil {
+			if err := screen.Print(1, 0, event.Title[i:(i+16)]); err != nil {
 				log.Println("screen update failure:", err)
 			}
 			time.Sleep(800 * time.Millisecond)
