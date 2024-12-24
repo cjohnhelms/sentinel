@@ -12,12 +12,12 @@ func Write(event scraper.Event) {
 	screen := lcd.New(lcd.LCD{Bus: "/dev/i2c-1", Address: 0x27, Rows: 2, Cols: 16, Backlight: true})
 
 	if err := screen.Init(); err != nil {
-		panic(err)
+		log.Println("Failed to init screen, proceeding with SMS")
 	}
 
 	// write time first because this is static
 	if err := screen.Print(2, 0, event.Start); err != nil {
-		log.Println("screen update failure:", err)
+		log.Println("Screen update failure:", err)
 	}
 
 	if len(event.Title) <= 16 {
@@ -27,7 +27,7 @@ func Write(event scraper.Event) {
 		var max = len(event.Title) - 15
 		for {
 			if err := screen.Print(1, 0, event.Title[i:(i+16)]); err != nil {
-				log.Println("screen update failure:", err)
+				log.Println("Screen update failure:", err)
 			}
 			time.Sleep(800 * time.Millisecond)
 			i++
@@ -41,21 +41,7 @@ func Write(event scraper.Event) {
 
 func Update(ch <-chan scraper.Event) {
 	for {
-		// Get the current time
-		now := time.Now()
-
-		// Calculate the next 2 PM
-		nextUpdate := time.Date(now.Year(), now.Month(), now.Day(), 3, 0, 0, 0, now.Location())
-		if now.After(nextUpdate) {
-			// If it’s already past 2 PM, schedule it for the next day
-			nextUpdate = nextUpdate.Add(24 * time.Hour)
-		}
-
-		// Calculate the duration until the next 2 PM
-		duration := nextUpdate.Sub(now)
-
-		// Sleep until the next 2 PM
-		time.Sleep(duration)
+		time.Sleep(30 * time.Second)
 
 		select {
 		case data := <-ch:
@@ -63,7 +49,7 @@ func Update(ch <-chan scraper.Event) {
 			Write(event)
 
 		default:
-			log.Println("no events in the channel, something might be wrong")
+			log.Println("No new events found in the channel")
 		}
 	}
 }
