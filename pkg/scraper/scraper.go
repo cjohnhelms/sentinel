@@ -36,13 +36,13 @@ func Scrape() Event {
 		colly.AllowedDomains("www.americanairlinescenter.com"))
 
 	c.OnRequest(func(r *colly.Request) {
-		log.Println("visiting: ", r.URL.String())
+		log.Println("Visiting: ", r.URL.String())
 	})
 	c.OnResponse(func(r *colly.Response) {
-		log.Println("visited: ", r.Request.URL.String())
+		log.Println("Visited: ", r.Request.URL.String())
 	})
 	c.OnError(func(r *colly.Response, err error) {
-		log.Println("failed to scrape page: ", err)
+		log.Println("Failed to scrape page: ", err)
 	})
 	c.OnHTML("div.info.clearfix", func(e *colly.HTMLElement) {
 		dt := e.ChildText("div.date")
@@ -60,7 +60,7 @@ func Scrape() Event {
 	})
 	err := c.Visit("https://www.americanairlinescenter.com/events")
 	if err != nil {
-		log.Printf("failed: %s\n", err)
+		log.Printf("Failed: %s\n", err)
 	}
 
 	return event
@@ -68,6 +68,10 @@ func Scrape() Event {
 
 func FetchEvents(ch chan<- Event) {
 	for {
+		// scrape events
+		event := Scrape()
+		ch <- event
+
 		// Get the current time
 		now := time.Now()
 
@@ -84,7 +88,5 @@ func FetchEvents(ch chan<- Event) {
 		// Sleep until the next 2 PM
 		time.Sleep(duration)
 
-		event := Scrape()
-		ch <- event
 	}
 }

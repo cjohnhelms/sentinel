@@ -55,7 +55,7 @@ func Notify(ch <-chan scraper.Event, recipients [2]string) {
 		case data := <-ch:
 			event := data
 			if event.Title == "" {
-				log.Println("no event found today")
+				log.Println("No event found today")
 			} else {
 				for _, recipient := range recipients {
 					if err := SendText(event, recipient); err != nil {
@@ -64,7 +64,7 @@ func Notify(ch <-chan scraper.Event, recipients [2]string) {
 				}
 			}
 		default:
-			log.Println("no events in the channel, something might be wrong")
+			log.Println("No new events in the channel")
 		}
 	}
 }
