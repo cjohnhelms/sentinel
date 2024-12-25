@@ -16,8 +16,10 @@ func Write(event scraper.Event) {
 	}
 
 	// write time first because this is static
-	if err := screen.Print(2, 0, event.Start); err != nil {
+	if event.Start != "" {
+		if err := screen.Print(2, 0, event.Start); err != nil {
 		log.Println("Screen update failure:", err)
+		}
 	}
 
 	if len(event.Title) <= 16 {

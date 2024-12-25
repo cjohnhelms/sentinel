@@ -54,7 +54,7 @@ func Notify(ch <-chan scraper.Event, recipients [2]string) {
 		select {
 		case data := <-ch:
 			event := data
-			if event.Title == "" {
+			if event.Start == "" {
 				log.Println("No event found today")
 			} else {
 				for _, recipient := range recipients {

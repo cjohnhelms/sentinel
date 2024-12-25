@@ -30,7 +30,11 @@ func parseDt(dt string) (string, string, error) {
 func Scrape() Event {
 	today := time.Now().Format("2006-01-02")
 
-	var event Event
+	var event = Event{
+		Title: "No event today",
+		Start: "",
+		Date: "",
+	}
 
 	c := colly.NewCollector(
 		colly.AllowedDomains("www.americanairlinescenter.com"))
