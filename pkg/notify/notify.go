@@ -3,33 +3,14 @@ package notify
 import (
 	"fmt"
 	"log"
+	"log/slog"
 	"sentinel/pkg/scraper"
 	"time"
-
-	"github.com/twilio/twilio-go"
-	api "github.com/twilio/twilio-go/rest/api/v2010"
 )
 
-func SendText(event scraper.Event, recipient string) error {
+func SendEmail(event scraper.Event, recipient string) error {
 	b := fmt.Sprint("AAC Event: %s\nStart time: %s", event.Title, event.Start)
-	client := twilio.NewRestClient()
 
-	params := &api.CreateMessageParams{}
-	params.SetBody(b)
-	params.SetFrom("+15127069578")
-	params.SetTo(recipient)
-
-	resp, err := client.Api.CreateMessage(params)
-	if err != nil {
-		log.Println(err)
-	} else {
-		if resp.Body != nil {
-			fmt.Println(*resp.Body)
-		} else {
-			fmt.Println(resp.Body)
-		}
-	}
-	return nil
 }
 
 func Notify(ch <-chan scraper.Event, recipients [2]string) {
@@ -55,7 +36,7 @@ func Notify(ch <-chan scraper.Event, recipients [2]string) {
 		case data := <-ch:
 			event := data
 			if event.Start == "" {
-				log.Println("No event found today")
+				slog.Info("No event found today")
 			} else {
 				for _, recipient := range recipients {
 					if err := SendText(event, recipient); err != nil {
@@ -64,7 +45,7 @@ func Notify(ch <-chan scraper.Event, recipients [2]string) {
 				}
 			}
 		default:
-			log.Println("No new events in the channel")
+			slog.Info("No new events in the channel")
 		}
 	}
 }
