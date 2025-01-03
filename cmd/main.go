@@ -1,14 +1,37 @@
 package main
 
 import (
-	"log"
+	"os"
+	"sentinel/pkg/config"
 	"sentinel/pkg/display"
 	"sentinel/pkg/scraper"
+
+	"golang.org/x/exp/slog"
 )
 
+type loggeyKey struct{}
+
 func main() {
-	log.Println("Service starting")
-	//var recipients = [2]string{os.Getenv("CHRIS_NUMBER"), os.Getenv("KYLE_NUMBER")}
+	cfg := config.New()
+	var level slog.Level
+
+	switch cfg.LogLevel {
+	case "DEBUG":
+		level = slog.LevelDebug
+	case "INFO":
+		level = slog.LevelInfo
+	default:
+		level = slog.LevelInfo
+
+	}
+	handlerOpts := &slog.HandlerOptions{
+		Level: level,
+	}
+	textHandler := slog.NewTextHandler(os.Stdout, handlerOpts)
+	logger := slog.New(textHandler)
+	slog.SetDefault(logger)
+
+	slog.Info("Service starting")
 
 	ch := make(chan scraper.Event, 1)
 	go scraper.FetchEvents(ch)
