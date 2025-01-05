@@ -17,6 +17,8 @@ func Write(event scraper.Event) {
 		slog.Error("Failed to init screen, proceeding with SMS")
 	}
 
+	slog.Debug("Writing screen: %s - %s", event.Title, event.Start)
+
 	// write time first because this is static
 	if event.Start != "" {
 		if err := screen.Print(2, 0, event.Start); err != nil {
