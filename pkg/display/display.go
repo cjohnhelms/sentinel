@@ -20,7 +20,7 @@ func Write(event scraper.Event) {
 	// write time first because this is static
 	if event.Start != "" {
 		if err := screen.Print(2, 0, event.Start); err != nil {
-			slog.Error("Screen update failure:", err)
+			slog.Error(fmt.Sprintf("Screen update failure: %s", err))
 		}
 	}
 
@@ -31,7 +31,7 @@ func Write(event scraper.Event) {
 		var max = len(event.Title) - 15
 		for {
 			if err := screen.Print(1, 0, event.Title[i:(i+16)]); err != nil {
-				slog.Error("Screen update failure:", err)
+				slog.Error(fmt.Sprintf("Screen update failure: %s", err))
 			}
 			time.Sleep(800 * time.Millisecond)
 			i++

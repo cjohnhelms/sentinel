@@ -4,6 +4,7 @@ go 1.23.0
 
 require (
 	github.com/gocolly/colly v1.2.0
+	github.com/joho/godotenv v1.5.1
 	github.com/mskrha/rpi-lcd v0.0.0-20201213150335-131bf4c0550a
 	golang.org/x/exp v0.0.0-20241217172543-b2144cdd0a67
 )

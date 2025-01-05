@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"sentinel/pkg/config"
 	"sentinel/pkg/display"
@@ -8,8 +9,6 @@ import (
 
 	"golang.org/x/exp/slog"
 )
-
-type loggeyKey struct{}
 
 func main() {
 	cfg := config.New()
@@ -32,6 +31,7 @@ func main() {
 	slog.SetDefault(logger)
 
 	slog.Info("Service starting")
+	slog.Debug(fmt.Sprintf("Config: %+v", cfg))
 
 	ch := make(chan scraper.Event, 1)
 	go scraper.FetchEvents(ch)
