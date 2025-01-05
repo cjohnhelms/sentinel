@@ -1,19 +1,42 @@
 package notify
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"log/slog"
+	"net/smtp"
+	"sentinel/pkg/config"
 	"sentinel/pkg/scraper"
 	"time"
 )
 
-func SendEmail(event scraper.Event, recipient string) error {
-	b := fmt.Sprint("AAC Event: %s\nStart time: %s", event.Title, event.Start)
-
+type Email struct {
+	Password  string
+	FromName  string
+	FromEmail string
+	ToEmail   string
+	Subject   string
+	Message   string
 }
 
-func Notify(ch <-chan scraper.Event, recipients [2]string) {
+func (em *Email) Send() error {
+	auth := smtp.PlainAuth("", em.FromEmail, em.Password, "smtp.gmail.com")
+	msg := fmt.Sprintf("From: %s %s\nTo: %s\nSubject: %s\n\n%s", em.FromName, em.FromEmail, em.ToEmail, em.Subject, em.Message)
+
+	err := smtp.SendMail("smtp.gmail.com:587",
+		auth,
+		em.FromEmail,
+		[]string{em.ToEmail},
+		[]byte(msg),
+	)
+	if err != nil {
+		return errors.New("smtp error: " + err.Error())
+	}
+	slog.Info("Successfully sent to " + em.ToEmail)
+	return nil
+}
+
+func Notify(ch <-chan scraper.Event, recipients [2]string, cfg *config.Config) {
 	for {
 		// Get the current time
 		now := time.Now()
@@ -39,8 +62,16 @@ func Notify(ch <-chan scraper.Event, recipients [2]string) {
 				slog.Info("No event found today")
 			} else {
 				for _, recipient := range recipients {
-					if err := SendText(event, recipient); err != nil {
-						log.Println(err)
+					m := &Email{
+						FromName:  "Sentinel",
+						FromEmail: cfg.Sender,
+						Password:  cfg.Password,
+						ToEmail:   recipient,
+						Subject:   "Sentinel Report",
+						Message:   "AAC Event: %s - %s\n\nConsider alternate routes. Recommended to approach via Harry Hines Blvd.",
+					}
+					if err := m.Send(); err != nil {
+						slog.Error(err.Error())
 					}
 				}
 			}
