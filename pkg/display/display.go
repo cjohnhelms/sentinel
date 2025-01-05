@@ -53,7 +53,7 @@ func Update(ch <-chan scraper.Event) {
 			Write(event)
 
 		default:
-			slog.Info("No new events found in the channel")
+			slog.Debug("No new events found in the channel")
 		}
 	}
 }
