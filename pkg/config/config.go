@@ -1,6 +1,8 @@
 package config
 
-import "os"
+import (
+	"github.com/joho/godotenv"
+)
 
 type Config struct {
 	Sender   string
@@ -11,13 +13,14 @@ type Config struct {
 }
 
 func New() *Config {
+	envFile, _ := godotenv.Read(".env")
 	return &Config{
-		Sender:   os.Getenv("SENDER"),
-		Password: os.Getenv("PASSWORD"),
+		Sender:   envFile["SENDER"],
+		Password: envFile["PASSWORD"],
 		Emails: [2]string{
-			os.Getenv("CHRIS_EMAIL"), os.Getenv("KYLE_EMAIL"),
+			envFile["CHRIS_EMAIL"], envFile["KYLE_EMAIL"],
 		},
-		LogLevel: os.Getenv("LOG_LEVEL"),
-		Version:  os.Getenv("VERSION"),
+		LogLevel: envFile["LOG_LEVEL"],
+		Version:  envFile["VERSION"],
 	}
 }
