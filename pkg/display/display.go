@@ -2,27 +2,28 @@ package display
 
 import (
 	"fmt"
-	"log/slog"
-	"sentinel/pkg/scraper"
 	"time"
 
+	"github.com/cjohnhelms/sentinel/pkg/scraper"
+
+	log "github.com/cjohnhelms/sentinel/pkg/logging"
 	lcd "github.com/mskrha/rpi-lcd"
 )
 
 func Write(event scraper.Event) {
 	screen := lcd.New(lcd.LCD{Bus: "/dev/i2c-1", Address: 0x27, Rows: 2, Cols: 16, Backlight: true})
-	slog.Debug(fmt.Sprintf("Screen: %+v", screen))
+	log.Debug(fmt.Sprintf("Screen: %+v", screen))
 
 	if err := screen.Init(); err != nil {
-		slog.Error("Failed to init screen, proceeding with SMS")
+		log.Error("Failed to init screen, proceeding with SMS")
 	}
 
-	slog.Debug("Writing screen: %s - %s", event.Title, event.Start)
+	log.Debug(fmt.Sprintf("Writing screen: %s - %s", event.Title, event.Start))
 
 	// write time first because this is static
 	if event.Start != "" {
 		if err := screen.Print(2, 0, event.Start); err != nil {
-			slog.Error(fmt.Sprintf("Screen update failure: %s", err))
+			log.Error(fmt.Sprintf("Screen update failure: %s", err))
 		}
 	}
 
@@ -33,7 +34,7 @@ func Write(event scraper.Event) {
 		var max = len(event.Title) - 15
 		for {
 			if err := screen.Print(1, 0, event.Title[i:(i+16)]); err != nil {
-				slog.Error(fmt.Sprintf("Screen update failure: %s", err))
+				log.Error(fmt.Sprintf("Screen update failure: %s", err))
 			}
 			time.Sleep(800 * time.Millisecond)
 			i++
@@ -55,7 +56,7 @@ func Update(ch <-chan scraper.Event) {
 			Write(event)
 
 		default:
-			slog.Debug("No new events found in the channel")
+			log.Debug("No new events found in the channel")
 		}
 	}
 }

@@ -2,37 +2,20 @@ package main
 
 import (
 	"fmt"
-	"os"
-	"sentinel/pkg/config"
-	"sentinel/pkg/display"
-	"sentinel/pkg/notify"
-	"sentinel/pkg/scraper"
 
-	"golang.org/x/exp/slog"
+	"github.com/cjohnhelms/sentinel/pkg/config"
+	"github.com/cjohnhelms/sentinel/pkg/display"
+	"github.com/cjohnhelms/sentinel/pkg/notify"
+	"github.com/cjohnhelms/sentinel/pkg/scraper"
+
+	log "github.com/cjohnhelms/sentinel/pkg/logging"
 )
 
 func main() {
 	cfg := config.New()
-	var level slog.Level
 
-	switch cfg.LogLevel {
-	case "DEBUG":
-		level = slog.LevelDebug
-	case "INFO":
-		level = slog.LevelInfo
-	default:
-		level = slog.LevelInfo
-
-	}
-	handlerOpts := &slog.HandlerOptions{
-		Level: level,
-	}
-	textHandler := slog.NewTextHandler(os.Stdout, handlerOpts)
-	logger := slog.New(textHandler)
-	slog.SetDefault(logger)
-
-	slog.Info("Service starting")
-	slog.Debug(fmt.Sprintf("Config: %+v", cfg))
+	log.Info("Service starting")
+	log.Debug(fmt.Sprintf("Config: %+v", cfg))
 
 	ch := make(chan scraper.Event, 1)
 	go scraper.FetchEvents(ch)

@@ -3,11 +3,12 @@ package notify
 import (
 	"errors"
 	"fmt"
-	"log/slog"
 	"net/smtp"
-	"sentinel/pkg/config"
-	"sentinel/pkg/scraper"
 	"time"
+
+	"github.com/cjohnhelms/sentinel/pkg/config"
+	log "github.com/cjohnhelms/sentinel/pkg/logging"
+	"github.com/cjohnhelms/sentinel/pkg/scraper"
 )
 
 type Email struct {
@@ -32,7 +33,7 @@ func (em *Email) Send() error {
 	if err != nil {
 		return errors.New("smtp error: " + err.Error())
 	}
-	slog.Info("Successfully sent to " + em.ToEmail)
+	log.Info("Successfully sent to " + em.ToEmail)
 	return nil
 }
 
@@ -59,7 +60,7 @@ func Notify(ch <-chan scraper.Event, cfg *config.Config) {
 		case data := <-ch:
 			event := data
 			if event.Start == "" {
-				slog.Info("No event found today")
+				log.Info("No event found today")
 			} else {
 				for _, recipient := range cfg.Emails {
 					m := &Email{
@@ -71,12 +72,12 @@ func Notify(ch <-chan scraper.Event, cfg *config.Config) {
 						Message:   "AAC Event: %s - %s\n\nConsider alternate routes. Recommended to approach via Harry Hines Blvd.",
 					}
 					if err := m.Send(); err != nil {
-						slog.Error(err.Error())
+						log.Error(err.Error())
 					}
 				}
 			}
 		default:
-			slog.Info("No new events in the channel")
+			log.Info("No new events in the channel")
 		}
 	}
 }
