@@ -3,12 +3,12 @@ package scraper
 import (
 	"errors"
 	"fmt"
-	"log"
-	"log/slog"
 	"strings"
 	"time"
 
 	"github.com/gocolly/colly"
+
+	log "github.com/cjohnhelms/sentinel/pkg/logging"
 )
 
 type Event struct {
@@ -42,13 +42,13 @@ func Scrape() Event {
 		colly.AllowedDomains("www.americanairlinescenter.com"))
 
 	c.OnRequest(func(r *colly.Request) {
-		slog.Info(fmt.Sprintf("Visiting: %s", r.URL.String()))
+		log.Info(fmt.Sprintf("Visiting: %s", r.URL.String()))
 	})
 	c.OnResponse(func(r *colly.Response) {
-		slog.Info(fmt.Sprintf("Visited: %s", r.Request.URL.String()))
+		log.Info(fmt.Sprintf("Visited: %s", r.Request.URL.String()))
 	})
 	c.OnError(func(r *colly.Response, err error) {
-		slog.Info(fmt.Sprintf("Failed to scrape page: %s", err))
+		log.Info(fmt.Sprintf("Failed to scrape page: %s", err))
 	})
 	c.OnHTML("div.info.clearfix", func(e *colly.HTMLElement) {
 		dt := e.ChildText("div.date")
@@ -56,17 +56,17 @@ func Scrape() Event {
 
 		isoDate, timeStr, err := parseDt(dt)
 		if err != nil {
-			log.Println(err)
+			log.Error(err.Error())
 		}
 
 		if isoDate == today {
 			event = Event{Date: isoDate, Start: timeStr, Title: title}
-			slog.Info(fmt.Sprintf("Found event today: %s", event.Title))
+			log.Info(fmt.Sprintf("Found event today: %s", event.Title))
 		}
 	})
 	err := c.Visit("https://www.americanairlinescenter.com/events")
 	if err != nil {
-		slog.Error(fmt.Sprintf("Failed: %s\n", err))
+		log.Error(fmt.Sprintf("Failed: %s\n", err))
 	}
 
 	return event
