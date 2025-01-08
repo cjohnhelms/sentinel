@@ -36,7 +36,7 @@ func (em *Email) Send() error {
 	return nil
 }
 
-func Notify(ch <-chan scraper.Event, recipients [2]string, cfg *config.Config) {
+func Notify(ch <-chan scraper.Event, cfg *config.Config) {
 	for {
 		// Get the current time
 		now := time.Now()
@@ -61,7 +61,7 @@ func Notify(ch <-chan scraper.Event, recipients [2]string, cfg *config.Config) {
 			if event.Start == "" {
 				slog.Info("No event found today")
 			} else {
-				for _, recipient := range recipients {
+				for _, recipient := range cfg.Emails {
 					m := &Email{
 						FromName:  "Sentinel",
 						FromEmail: cfg.Sender,
