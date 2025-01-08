@@ -2,6 +2,7 @@ package display
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cjohnhelms/sentinel/pkg/scraper"
@@ -25,10 +26,16 @@ func Write(event scraper.Event) {
 		if err := screen.Print(2, 0, event.Start); err != nil {
 			log.Error(fmt.Sprintf("Screen update failure: %s", err))
 		}
+	} else {
+		if err := screen.Print(2, 0, strings.Repeat(" ", 16)); err != nil {
+			log.Error(fmt.Sprintf("Screen update failure: %s", err))
+		}
 	}
 
 	if len(event.Title) <= 16 {
-		screen.Print(1, 0, event.Title)
+		r := (16 - len(event.Title))
+		t := event.Title + strings.Repeat(" ", r)
+		screen.Print(1, 0, t)
 	} else {
 		var i int
 		var max = len(event.Title) - 15
