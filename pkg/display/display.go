@@ -47,7 +47,7 @@ func Write(event scraper.Event) {
 
 func Update(ch <-chan scraper.Event) {
 	for {
-		time.Sleep(30 * time.Second)
+		time.Sleep(60 * time.Second)
 
 		select {
 		case data := <-ch:
