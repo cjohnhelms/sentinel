@@ -2,7 +2,7 @@
 
 # apt
 sudo apt-update > /dev/null
-sudo apt install -y wget vim > /dev/null
+sudo apt install -y wget vim tmux > /dev/null
 
 # install golang
 wget -c https://golang.org/dl/go1.23.4.linux-arm64.tar.gz

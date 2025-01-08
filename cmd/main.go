@@ -5,6 +5,7 @@ import (
 	"os"
 	"sentinel/pkg/config"
 	"sentinel/pkg/display"
+	"sentinel/pkg/notify"
 	"sentinel/pkg/scraper"
 
 	"golang.org/x/exp/slog"
@@ -35,7 +36,7 @@ func main() {
 
 	ch := make(chan scraper.Event, 1)
 	go scraper.FetchEvents(ch)
-	//go notify.Notify(ch, recipients)
+	go notify.Notify(ch, cfg)
 	go display.Update(ch)
 
 	select {}
