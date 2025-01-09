@@ -13,13 +13,13 @@ import (
 
 func Write(event scraper.Event) {
 	screen := lcd.New(lcd.LCD{Bus: "/dev/i2c-1", Address: 0x27, Rows: 2, Cols: 16, Backlight: true})
-	log.Debug(fmt.Sprintf("Screen: %+v", screen))
+	log.Debug(fmt.Sprintf("Screen: %+v", screen), "SERVICE", "DISPLAY")
 
 	if err := screen.Init(); err != nil {
 		log.Error("Failed to init screen, proceeding with SMS", "SERVICE", "DISPLAY")
 	}
 
-	log.Debug(fmt.Sprintf("Writing screen: %s - %s", event.Title, event.Start))
+	log.Debug(fmt.Sprintf("Writing screen: %s - %s", event.Title, event.Start), "SERVICE", "DISPLAY")
 
 	// write time first because this is static
 	if event.Start != "" {
