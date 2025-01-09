@@ -57,11 +57,10 @@ func Notify(ch <-chan scraper.Event, cfg *config.Config) {
 		time.Sleep(duration)
 
 		select {
-		case data := <-ch:
-			event := data
-			if event.Start == "" {
-				log.Info("No event found today")
-			} else {
+		case event := <-ch:
+			today := time.Now().Format("2006-01-02")
+			if event.Start == today {
+				log.Info(fmt.Sprintf("Senging emails to: %v", cfg.Emails))
 				for _, recipient := range cfg.Emails {
 					m := &Email{
 						FromName:  "Sentinel",
@@ -75,9 +74,11 @@ func Notify(ch <-chan scraper.Event, cfg *config.Config) {
 						log.Error(err.Error())
 					}
 				}
+			} else {
+				log.Info("No event today")
 			}
 		default:
-			log.Info("No new events in the channel")
+			log.Debug("No new data in the channel")
 		}
 	}
 }

@@ -58,12 +58,10 @@ func Update(ch <-chan scraper.Event) {
 		time.Sleep(60 * time.Second)
 
 		select {
-		case data := <-ch:
-			event := data
+		case event := <-ch:
 			Write(event)
-
 		default:
-			log.Debug("No new events found in the channel")
+			log.Debug("No new data in the channel")
 		}
 	}
 }
