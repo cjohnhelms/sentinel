@@ -23,7 +23,8 @@ func init() {
 
 	}
 	handlerOpts := &slog.HandlerOptions{
-		Level: level,
+		Level:     level,
+		AddSource: true,
 	}
 	textHandler := slog.NewTextHandler(os.Stdout, handlerOpts)
 	logger = slog.New(textHandler)
