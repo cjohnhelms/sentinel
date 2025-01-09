@@ -23,21 +23,20 @@ func init() {
 
 	}
 	handlerOpts := &slog.HandlerOptions{
-		Level:     level,
-		AddSource: true,
+		Level: level,
 	}
 	textHandler := slog.NewTextHandler(os.Stdout, handlerOpts)
 	logger = slog.New(textHandler)
 }
 
-func Info(msg string) {
+func Info(msg string, args ...any) {
 	logger.Info(msg)
 }
 
-func Debug(msg string) {
+func Debug(msg string, args ...any) {
 	logger.Debug(msg)
 }
 
-func Error(msg string) {
+func Error(msg string, args ...any) {
 	logger.Error(msg)
 }
