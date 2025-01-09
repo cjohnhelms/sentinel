@@ -33,7 +33,7 @@ func (em *Email) Send() error {
 	if err != nil {
 		return errors.New("smtp error: " + err.Error())
 	}
-	log.Info("Successfully sent to " + em.ToEmail)
+	log.Info("Successfully sent to "+em.ToEmail, "SERIVCE", "NOTIFY")
 	return nil
 }
 
@@ -60,7 +60,7 @@ func Notify(ch <-chan scraper.Event, cfg *config.Config) {
 		case event := <-ch:
 			today := time.Now().Format("2006-01-02")
 			if event.Start == today {
-				log.Info(fmt.Sprintf("Senging emails to: %v", cfg.Emails))
+				log.Info(fmt.Sprintf("Senging emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
 				for _, recipient := range cfg.Emails {
 					m := &Email{
 						FromName:  "Sentinel",
@@ -71,14 +71,14 @@ func Notify(ch <-chan scraper.Event, cfg *config.Config) {
 						Message:   "AAC Event: %s - %s\n\nConsider alternate routes. Recommended to approach via Harry Hines Blvd.",
 					}
 					if err := m.Send(); err != nil {
-						log.Error(err.Error())
+						log.Error(err.Error(), "SERVICE", "NOTIFY")
 					}
 				}
 			} else {
-				log.Info("No event today")
+				log.Info("No event today", "SERIVCE", "NOTIFY")
 			}
 		default:
-			log.Debug("No new data in the channel")
+			log.Debug("No new data in the channel", "SERVICE", "NOTIFY")
 		}
 	}
 }

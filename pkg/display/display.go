@@ -16,7 +16,7 @@ func Write(event scraper.Event) {
 	log.Debug(fmt.Sprintf("Screen: %+v", screen))
 
 	if err := screen.Init(); err != nil {
-		log.Error("Failed to init screen, proceeding with SMS")
+		log.Error("Failed to init screen, proceeding with SMS", "SERVICE", "DISPLAY")
 	}
 
 	log.Debug(fmt.Sprintf("Writing screen: %s - %s", event.Title, event.Start))
@@ -24,11 +24,11 @@ func Write(event scraper.Event) {
 	// write time first because this is static
 	if event.Start != "" {
 		if err := screen.Print(2, 0, event.Start); err != nil {
-			log.Error(fmt.Sprintf("Screen update failure: %s", err))
+			log.Error(fmt.Sprintf("Screen update failure: %s", err), "SERVICE", "DISPLAY")
 		}
 	} else {
 		if err := screen.Print(2, 0, strings.Repeat(" ", 16)); err != nil {
-			log.Error(fmt.Sprintf("Screen update failure: %s", err))
+			log.Error(fmt.Sprintf("Screen update failure: %s", err), "SERVICE", "DISPLAY")
 		}
 	}
 
@@ -41,7 +41,7 @@ func Write(event scraper.Event) {
 		var max = len(event.Title) - 15
 		for {
 			if err := screen.Print(1, 0, event.Title[i:(i+16)]); err != nil {
-				log.Error(fmt.Sprintf("Screen update failure: %s", err))
+				log.Error(fmt.Sprintf("Screen update failure: %s", err), "SERIVCE", "DISPLAY")
 			}
 			time.Sleep(800 * time.Millisecond)
 			i++
@@ -61,7 +61,7 @@ func Update(ch <-chan scraper.Event) {
 		case event := <-ch:
 			Write(event)
 		default:
-			log.Debug("No new data in the channel")
+			log.Debug("No new data in the channel", "SERVICE", "DISPLAY")
 		}
 	}
 }
