@@ -30,13 +30,13 @@ func init() {
 }
 
 func Info(msg string, args ...any) {
-	logger.Info(msg)
+	logger.Info(msg, args)
 }
 
 func Debug(msg string, args ...any) {
-	logger.Debug(msg)
+	logger.Debug(msg, args)
 }
 
 func Error(msg string, args ...any) {
-	logger.Error(msg)
+	logger.Error(msg, args)
 }
