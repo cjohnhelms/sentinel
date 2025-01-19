@@ -59,7 +59,7 @@ func Notify(ch <-chan scraper.Event, cfg *config.Config) {
 		select {
 		case event := <-ch:
 			today := time.Now().Format("2006-01-02")
-			if event.Start == today {
+			if event.Date == today {
 				log.Info(fmt.Sprintf("Senging emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
 				for _, recipient := range cfg.Emails {
 					m := &Email{
