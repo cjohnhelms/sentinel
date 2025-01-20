@@ -43,7 +43,7 @@ func Notify(ch <-chan scraper.Event, cfg *config.Config) {
 		now := time.Now()
 
 		// Calculate the next 2 PM
-		nextNotify := time.Date(now.Year(), now.Month(), now.Day(), 14, 0, 0, 0, now.Location())
+		nextNotify := time.Date(now.Year(), now.Month(), now.Day(), 15, 0, 0, 0, now.Location())
 
 		if now.After(nextNotify) {
 			// If it’s already past 2 PM, schedule it for the next day
@@ -60,7 +60,7 @@ func Notify(ch <-chan scraper.Event, cfg *config.Config) {
 		case event := <-ch:
 			today := time.Now().Format("2006-01-02")
 			if event.Date == today {
-				log.Info(fmt.Sprintf("Senging emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
+				log.Info(fmt.Sprintf("Sending emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
 				for _, recipient := range cfg.Emails {
 					m := &Email{
 						FromName:  "Sentinel",
@@ -68,7 +68,7 @@ func Notify(ch <-chan scraper.Event, cfg *config.Config) {
 						Password:  cfg.Password,
 						ToEmail:   recipient,
 						Subject:   "Sentinel Report",
-						Message:   "AAC Event: %s - %s\n\nConsider alternate routes. Recommended to approach via Harry Hines Blvd.",
+						Message:   fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes. Recommended to approach via Harry Hines Blvd.", event.Title, event.Start),
 					}
 					if err := m.Send(); err != nil {
 						log.Error(err.Error(), "SERVICE", "NOTIFY")
