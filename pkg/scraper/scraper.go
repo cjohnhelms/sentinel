@@ -76,7 +76,9 @@ func FetchEvents(ch chan<- Event, quit chan bool) {
 	for {
 		// scrape events
 		event := Scrape()
+		log.Debug("New scrape done, sending quit signal")
 		quit <- true
+		log.Debug("Sending event in channel")
 		ch <- event
 
 		// Get the current time

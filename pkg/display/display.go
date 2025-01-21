@@ -15,14 +15,21 @@ func writeTitle(event scraper.Event, screen *lcd.LCD, quit <-chan bool) {
 	var i int
 	var max = len(event.Title) - 15
 	for {
-		if err := screen.Print(1, 0, event.Title[i:(i+16)]); err != nil {
-			log.Error(fmt.Sprintf("Screen update failure: %s", err), "SERIVCE", "DISPLAY")
-		}
-		time.Sleep(800 * time.Millisecond)
-		i++
-		if i == max {
-			i = 0
-			time.Sleep(3 * time.Second)
+		select {
+		case <-quit:
+			log.Info("New event found and quit recieved, killing goroutine")
+			return
+		default:
+			log.Debug("No new event, writing screen from default")
+			if err := screen.Print(1, 0, event.Title[i:(i+16)]); err != nil {
+				log.Error(fmt.Sprintf("Screen update failure: %s", err), "SERIVCE", "DISPLAY")
+			}
+			time.Sleep(800 * time.Millisecond)
+			i++
+			if i == max {
+				i = 0
+				time.Sleep(3 * time.Second)
+			}
 		}
 	}
 }
