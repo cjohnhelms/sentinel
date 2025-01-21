@@ -20,7 +20,6 @@ func writeTitle(event scraper.Event, screen *lcd.LCD, quit <-chan bool) {
 			log.Info("New event found and quit recieved, killing goroutine")
 			return
 		default:
-			log.Debug("No new event, writing screen from default")
 			if err := screen.Print(1, 0, event.Title[i:(i+16)]); err != nil {
 				log.Error(fmt.Sprintf("Screen update failure: %s", err), "SERIVCE", "DISPLAY")
 			}
