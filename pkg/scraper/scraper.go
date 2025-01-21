@@ -72,10 +72,11 @@ func Scrape() Event {
 	return event
 }
 
-func FetchEvents(ch chan<- Event) {
+func FetchEvents(ch chan<- Event, quit chan bool) {
 	for {
 		// scrape events
 		event := Scrape()
+		quit <- true
 		ch <- event
 
 		// Get the current time
