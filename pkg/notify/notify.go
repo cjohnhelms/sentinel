@@ -56,29 +56,25 @@ func Notify(ch <-chan scraper.Event, cfg *config.Config) {
 		// Sleep until the next 2 PM
 		time.Sleep(duration)
 
-		select {
-		case event := <-ch:
-			today := time.Now().Format("2006-01-02")
-			if event.Date == today {
-				log.Info(fmt.Sprintf("Sending emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
-				for _, recipient := range cfg.Emails {
-					m := &Email{
-						FromName:  "Sentinel",
-						FromEmail: cfg.Sender,
-						Password:  cfg.Password,
-						ToEmail:   recipient,
-						Subject:   "Sentinel Report",
-						Message:   fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes. Recommended to approach via Harry Hines Blvd.", event.Title, event.Start),
-					}
-					if err := m.Send(); err != nil {
-						log.Error(err.Error(), "SERVICE", "NOTIFY")
-					}
+		event := <-ch
+		today := time.Now().Format("2006-01-02")
+		if event.Date == today {
+			log.Info(fmt.Sprintf("Sending emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
+			for _, recipient := range cfg.Emails {
+				m := &Email{
+					FromName:  "Sentinel",
+					FromEmail: cfg.Sender,
+					Password:  cfg.Password,
+					ToEmail:   recipient,
+					Subject:   "Sentinel Report",
+					Message:   fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes. Recommended to approach via Harry Hines Blvd.", event.Title, event.Start),
 				}
-			} else {
-				log.Info("No event today", "SERIVCE", "NOTIFY")
+				if err := m.Send(); err != nil {
+					log.Error(err.Error(), "SERVICE", "NOTIFY")
+				}
 			}
-		default:
-			log.Debug("No new data in the channel", "SERVICE", "NOTIFY")
+		} else {
+			log.Info("No event today", "SERIVCE", "NOTIFY")
 		}
 	}
 }
