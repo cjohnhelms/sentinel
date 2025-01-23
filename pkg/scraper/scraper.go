@@ -102,8 +102,6 @@ func FetchEvents(ctx context.Context, wg *sync.WaitGroup, ch chan<- Event) {
 
 			// Sleep until the next 2 PM
 			time.Sleep(duration)
-
-			log.Debug("Performing new scrape and sending quit signal")
 		}
 	}
 }
