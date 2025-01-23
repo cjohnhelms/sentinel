@@ -91,8 +91,6 @@ func Update(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event) {
 			log.Debug("Screen write waitgroup done, launching new routine")
 			go writeScreen(writeWg, event, quit) // launch new routine
 			writeWg.Add(1)                       // add new wait
-		default:
-			log.Debug("No new signals or event data")
 		}
 	}
 }
