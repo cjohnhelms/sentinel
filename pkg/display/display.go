@@ -15,13 +15,17 @@ import (
 
 func writeScreen(wg *sync.WaitGroup, event scraper.Event, quit <-chan bool) {
 	defer wg.Done()
-	log.Debug("Starting screen write routine")
+
+	// screen init
+	log.Debug("Starting new screen write routine")
 	screen := lcd.New(lcd.LCD{Bus: "/dev/i2c-1", Address: 0x27, Rows: 2, Cols: 16, Backlight: true})
 	log.Debug(fmt.Sprintf("Screen: %+v", screen), "SERVICE", "DISPLAY")
 
 	if err := screen.Init(); err != nil {
 		log.Error("Failed to init screen, proceeding with SMS", "SERVICE", "DISPLAY")
 	}
+
+	// loop
 	for {
 		select {
 		case <-quit:
@@ -87,6 +91,8 @@ func Update(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event) {
 			log.Debug("Screen write waitgroup done, launching new routine")
 			go writeScreen(writeWg, event, quit) // launch new routine
 			writeWg.Add(1)                       // add new wait
+		default:
+			log.Debug("No new signals or event data")
 		}
 	}
 }
