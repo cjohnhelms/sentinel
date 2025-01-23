@@ -15,21 +15,18 @@ import (
 
 func writeScreen(event scraper.Event, quit <-chan bool) {
 	log.Debug("Starting screen write routine")
+	screen := lcd.New(lcd.LCD{Bus: "/dev/i2c-1", Address: 0x27, Rows: 2, Cols: 16, Backlight: true})
+	log.Debug(fmt.Sprintf("Screen: %+v", screen), "SERVICE", "DISPLAY")
+
+	if err := screen.Init(); err != nil {
+		log.Error("Failed to init screen, proceeding with SMS", "SERVICE", "DISPLAY")
+	}
 	for {
 		select {
 		case <-quit:
 			log.Info("Quit recieved, killing routine")
 			return
 		default:
-			screen := lcd.New(lcd.LCD{Bus: "/dev/i2c-1", Address: 0x27, Rows: 2, Cols: 16, Backlight: true})
-			log.Debug(fmt.Sprintf("Screen: %+v", screen), "SERVICE", "DISPLAY")
-
-			if err := screen.Init(); err != nil {
-				log.Error("Failed to init screen, proceeding with SMS", "SERVICE", "DISPLAY")
-			}
-
-			log.Debug(fmt.Sprintf("Writing screen: %s - %s", event.Title, event.Start), "SERVICE", "DISPLAY")
-
 			// write time first because this is static
 			if event.Start != "" {
 				if err := screen.Print(2, 0, event.Start); err != nil {
