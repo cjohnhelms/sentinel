@@ -74,7 +74,7 @@ func Scrape() Event {
 	return event
 }
 
-func FetchEvents(ctx context.Context, wg *sync.WaitGroup, ch chan<- Event, quit chan bool) {
+func FetchEvents(ctx context.Context, wg *sync.WaitGroup, ch chan<- Event, quit chan<- bool) {
 	defer wg.Done()
 	for {
 		select {
