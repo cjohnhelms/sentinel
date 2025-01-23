@@ -13,40 +13,14 @@ import (
 	lcd "github.com/mskrha/rpi-lcd"
 )
 
-func writeTitle(event scraper.Event, screen *lcd.LCD, quit <-chan bool) {
-	var i int
-	var max = len(event.Title) - 15
+func writeScreen(event scraper.Event, quit <-chan bool) {
+	log.Debug("Starting screen write routine")
 	for {
 		select {
 		case <-quit:
-			log.Info("Quit recieved, killing goroutine")
+			log.Info("Quit recieved, killing routine")
 			return
 		default:
-			if err := screen.Print(1, 0, event.Title[i:(i+16)]); err != nil {
-				log.Error(fmt.Sprintf("Screen update failure: %s", err), "SERIVCE", "DISPLAY")
-			}
-			time.Sleep(800 * time.Millisecond)
-			i++
-			if i == max {
-				i = 0
-				time.Sleep(3 * time.Second)
-			}
-		}
-	}
-}
-
-func Update(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event, quit chan bool) {
-	defer wg.Done()
-	for {
-		select {
-		case <-ctx.Done():
-			log.Info("Killing display routine and children")
-			quit <- true
-			return
-		default:
-			time.Sleep(60 * time.Second)
-
-			event := <-ch
 			screen := lcd.New(lcd.LCD{Bus: "/dev/i2c-1", Address: 0x27, Rows: 2, Cols: 16, Backlight: true})
 			log.Debug(fmt.Sprintf("Screen: %+v", screen), "SERVICE", "DISPLAY")
 
@@ -72,8 +46,33 @@ func Update(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event, qu
 				t := event.Title + strings.Repeat(" ", r)
 				screen.Print(1, 0, t)
 			} else {
-				go writeTitle(event, screen, quit)
+				var i int
+				var max = len(event.Title) - 15
+				if err := screen.Print(1, 0, event.Title[i:(i+16)]); err != nil {
+					log.Error(fmt.Sprintf("Screen update failure: %s", err), "SERIVCE", "DISPLAY")
+				}
+				time.Sleep(800 * time.Millisecond)
+				i++
+				if i == max {
+					i = 0
+					time.Sleep(3 * time.Second)
+				}
 			}
+		}
+	}
+}
+
+func Update(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event, quit chan bool) {
+	defer wg.Done()
+	for {
+		select {
+		case <-ctx.Done():
+			log.Info("Killing display routine and children")
+			quit <- true
+			return
+		default:
+			event := <-ch
+			go writeScreen(event, quit)
 		}
 	}
 }
