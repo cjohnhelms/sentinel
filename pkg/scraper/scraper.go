@@ -74,7 +74,7 @@ func Scrape() Event {
 	return event
 }
 
-func FetchEvents(ctx context.Context, wg *sync.WaitGroup, ch chan<- Event, quit chan<- bool) {
+func FetchEvents(ctx context.Context, wg *sync.WaitGroup, ch chan<- Event) {
 	defer wg.Done()
 	for {
 		select {
@@ -104,7 +104,6 @@ func FetchEvents(ctx context.Context, wg *sync.WaitGroup, ch chan<- Event, quit 
 			time.Sleep(duration)
 
 			log.Debug("Performing new scrape and sending quit signal")
-			quit <- true
 		}
 	}
 }

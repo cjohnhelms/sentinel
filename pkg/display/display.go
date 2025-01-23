@@ -13,7 +13,8 @@ import (
 	lcd "github.com/mskrha/rpi-lcd"
 )
 
-func writeScreen(event scraper.Event, quit <-chan bool) {
+func writeScreen(wg *sync.WaitGroup, event scraper.Event, quit <-chan bool) {
+	defer wg.Done()
 	log.Debug("Starting screen write routine")
 	screen := lcd.New(lcd.LCD{Bus: "/dev/i2c-1", Address: 0x27, Rows: 2, Cols: 16, Backlight: true})
 	log.Debug(fmt.Sprintf("Screen: %+v", screen), "SERVICE", "DISPLAY")
@@ -56,19 +57,33 @@ func writeScreen(event scraper.Event, quit <-chan bool) {
 	}
 }
 
-func Update(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event, quit chan bool) {
+func Update(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event) {
 	defer wg.Done()
-	time.Sleep(30 * time.Second)
+
+	time.Sleep(10 * time.Second)
+
+	quit := make(chan bool, 1)
+	writeWg := new(sync.WaitGroup)
+
+	// wait for first event and launch initial routine
+	event := <-ch
+	go writeScreen(writeWg, event, quit)
+	writeWg.Add(1) // add wait
+
+	// start loop
 	for {
 		select {
 		case <-ctx.Done():
 			log.Info("Killing display routine and children")
 			quit <- true
-			time.Sleep(30 * time.Second)
+			writeWg.Wait()
 			return
-		default:
-			event := <-ch
-			go writeScreen(event, quit)
+		case event := <-ch:
+			// when new event enters the channel, kill old screen write routine
+			quit <- true
+			writeWg.Wait()                       // wait for done
+			go writeScreen(writeWg, event, quit) // launch new routine
+			writeWg.Add(1)                       // add new wait
 		}
 	}
 }
