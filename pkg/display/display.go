@@ -46,9 +46,9 @@ func writeScreen(event scraper.Event, quit <-chan bool) {
 				t := event.Title + strings.Repeat(" ", r)
 				screen.Print(1, 0, t)
 			} else {
-				var max = len(event.Title) - 15
-				for i := 0; i < max; i++ {
-					if err := screen.Print(1, 0, event.Title[i:(i+15)]); err != nil {
+				var moves = len(event.Title) - 15
+				for i := 0; i < moves; i++ {
+					if err := screen.Print(1, 0, event.Title[i:i+16]); err != nil {
 						log.Error(fmt.Sprintf("Screen update failure: %s", err), "SERIVCE", "DISPLAY")
 					}
 					time.Sleep(800 * time.Millisecond)
