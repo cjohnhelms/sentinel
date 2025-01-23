@@ -53,14 +53,15 @@ func writeScreen(event scraper.Event, quit <-chan bool) {
 					}
 					time.Sleep(800 * time.Millisecond)
 				}
-				time.Sleep(3 * time.Second)
 			}
+			time.Sleep(3 * time.Second)
 		}
 	}
 }
 
 func Update(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event, quit chan bool) {
 	defer wg.Done()
+	time.Sleep(30 * time.Second)
 	for {
 		select {
 		case <-ctx.Done():
