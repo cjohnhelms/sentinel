@@ -30,10 +30,9 @@ func main() {
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 
 	data := make(chan scraper.Event, 1)
-	quit := make(chan bool, 1)
-	go scraper.FetchEvents(ctx, wg, data, quit)
+	go scraper.FetchEvents(ctx, wg, data)
 	go notify.Notify(ctx, wg, data, cfg)
-	go display.Update(ctx, wg, data, quit)
+	go display.Update(ctx, wg, data)
 
 	<-sig
 	log.Error("Cancel recieved, killing routines")
