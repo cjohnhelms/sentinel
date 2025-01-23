@@ -64,7 +64,7 @@ func Update(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event, qu
 		case <-ctx.Done():
 			log.Info("Killing display routine and children")
 			quit <- true
-			time.Sleep(10 * time.Second)
+			time.Sleep(30 * time.Second)
 			return
 		default:
 			event := <-ch
