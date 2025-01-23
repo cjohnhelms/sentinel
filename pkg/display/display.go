@@ -77,12 +77,14 @@ func Update(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event) {
 			log.Info("Killing display routine and children")
 			quit <- true
 			writeWg.Wait()
+			log.Debug("Screen write waitgroup done, display routine exiting")
 			return
 		case event := <-ch:
 			// when new event enters the channel, kill old screen write routine
 			log.Debug("New event recieved, sending quit signal to kill last routine")
 			quit <- true
-			writeWg.Wait()                       // wait for done
+			writeWg.Wait() // wait for done
+			log.Debug("Screen write waitgroup done, launching new routine")
 			go writeScreen(writeWg, event, quit) // launch new routine
 			writeWg.Add(1)                       // add new wait
 		}
