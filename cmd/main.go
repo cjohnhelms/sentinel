@@ -1,7 +1,12 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
 
 	"github.com/cjohnhelms/sentinel/pkg/config"
 	"github.com/cjohnhelms/sentinel/pkg/display"
@@ -17,11 +22,23 @@ func main() {
 	log.Info("Service starting")
 	log.Debug(fmt.Sprintf("Config: %+v", cfg))
 
-	ch := make(chan scraper.Event, 1)
-	quit := make(chan bool, 1)
-	go scraper.FetchEvents(ch, quit)
-	go notify.Notify(ch, cfg)
-	go display.Update(ch, quit)
+	wg := new(sync.WaitGroup)
+	wg.Add(3)
 
-	select {}
+	ctx, cancel := context.WithCancel(context.Background())
+	sig := make(chan os.Signal, 1)
+	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
+
+	data := make(chan scraper.Event, 1)
+	quit := make(chan bool, 1)
+	go scraper.FetchEvents(ctx, wg, data, quit)
+	go notify.Notify(ctx, wg, data, cfg)
+	go display.Update(ctx, wg, data, quit)
+
+	<-sig
+	log.Error("Cancel recieved, killing routines")
+	cancel()
+
+	wg.Wait()
+	log.Info("All routines finished")
 }
