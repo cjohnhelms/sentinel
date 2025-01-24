@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"reflect"
 	"strings"
 	"sync"
 	"time"
@@ -64,7 +63,7 @@ func Scrape() Event {
 
 		if isoDate == today {
 			event = Event{Date: isoDate, Start: timeStr, Title: title}
-			log.Info(fmt.Sprintf("Found event today: %+v", event))
+			log.Info(fmt.Sprintf("Found event today: %s", event.Title))
 		}
 	})
 	err := c.Visit("https://www.americanairlinescenter.com/events")
@@ -77,7 +76,6 @@ func Scrape() Event {
 
 func FetchEvents(ctx context.Context, wg *sync.WaitGroup, ch chan<- Event) {
 	defer wg.Done()
-	var event = Event{}
 	for {
 		select {
 		case <-ctx.Done():
@@ -85,15 +83,25 @@ func FetchEvents(ctx context.Context, wg *sync.WaitGroup, ch chan<- Event) {
 			return
 		default:
 			// scrape events
-			event_tmp := Scrape()
-			if reflect.DeepEqual(event_tmp, event_tmp) {
-				log.Debug("Event is duplicate, not sending")
-			} else {
-				log.Debug("Event is new, sending event in channel")
-				event = event_tmp
-				ch <- event
+			event := Scrape()
+			log.Debug("Sending event in channel")
+			ch <- event
+
+			// Get the current time
+			now := time.Now()
+
+			// Calculate the next 2 PM
+			nextScrape := time.Date(now.Year(), now.Month(), now.Day(), 2, 0, 0, 0, now.Location())
+			if now.After(nextScrape) {
+				// If it’s already past 2 PM, schedule it for the next day
+				nextScrape = nextScrape.Add(24 * time.Hour)
 			}
-			time.Sleep(1 * time.Minute)
+
+			// Calculate the duration until the next 2 PM
+			duration := nextScrape.Sub(now)
+
+			// Sleep until the next 2 PM
+			time.Sleep(duration)
 		}
 	}
 }
