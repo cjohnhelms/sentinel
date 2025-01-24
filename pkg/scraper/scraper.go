@@ -76,6 +76,11 @@ func Scrape() Event {
 
 func FetchEvents(ctx context.Context, wg *sync.WaitGroup, ch chan<- Event) {
 	defer wg.Done()
+
+	// send inital scrape
+	event := Scrape()
+	ch <- event
+
 	for {
 		select {
 		case <-ctx.Done():
