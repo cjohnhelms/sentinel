@@ -9,7 +9,6 @@ import (
 	"syscall"
 
 	"github.com/cjohnhelms/sentinel/pkg/config"
-	"github.com/cjohnhelms/sentinel/pkg/display"
 	"github.com/cjohnhelms/sentinel/pkg/notify"
 	"github.com/cjohnhelms/sentinel/pkg/scraper"
 
@@ -32,7 +31,6 @@ func main() {
 	data := make(chan scraper.Event, 1)
 	go scraper.FetchEvents(ctx, wg, data)
 	go notify.Notify(ctx, wg, data, cfg)
-	go display.Update(ctx, wg, data)
 
 	<-sig
 	log.Error("Cancel recieved, killing routines")
