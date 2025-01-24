@@ -71,6 +71,7 @@ func Update(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event) {
 
 	// wait for first event and launch initial routine
 	event := <-ch
+	log.Debug("Launching inital screen write routine")
 	go writeScreen(writeWg, event, quit)
 	writeWg.Add(1) // add wait
 
