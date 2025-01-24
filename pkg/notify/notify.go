@@ -46,7 +46,7 @@ func Notify(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event, cf
 		case <-ctx.Done():
 			log.Info("Killing notify routine")
 			return
-		default:
+		case event := <-ch:
 			// Get the current time
 			now := time.Now()
 
@@ -64,7 +64,6 @@ func Notify(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event, cf
 			// Sleep until the next 2 PM
 			time.Sleep(duration)
 
-			event := <-ch
 			today := time.Now().Format("2006-01-02")
 			if event.Date == today {
 				log.Info(fmt.Sprintf("Sending emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
