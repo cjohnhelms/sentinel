@@ -46,25 +46,8 @@ func Notify(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event, cf
 		case <-ctx.Done():
 			log.Info("Killing notify routine")
 			return
-		default:
-			// Get the current time
-			now := time.Now()
-
-			// Calculate the next 2 PM
-			nextNotify := time.Date(now.Year(), now.Month(), now.Day(), 15, 0, 0, 0, now.Location())
-
-			if now.After(nextNotify) {
-				// If it’s already past 2 PM, schedule it for the next day
-				nextNotify = nextNotify.Add(24 * time.Hour)
-			}
-
-			// Calculate the duration until the next 2 PM
-			duration := nextNotify.Sub(now)
-
-			// Sleep until the next 2 PM
-			time.Sleep(duration)
-
-			event := <-ch
+		case event := <-ch:
+			log.Info("Notify routine recieved event from channel")
 			today := time.Now().Format("2006-01-02")
 			if event.Date == today {
 				log.Info(fmt.Sprintf("Sending emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
@@ -82,7 +65,7 @@ func Notify(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event, cf
 					}
 				}
 			} else {
-				log.Info("No event today", "SERIVCE", "NOTIFY")
+				log.Info("Event recieved was not today, taking no action", "SERIVCE", "NOTIFY")
 			}
 		}
 	}
