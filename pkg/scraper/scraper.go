@@ -83,25 +83,11 @@ func FetchEvents(ctx context.Context, wg *sync.WaitGroup, ch chan<- Event) {
 			return
 		default:
 			// scrape events
-			event := Scrape()
-			log.Debug("Sending event in channel")
-			ch <- event
-
-			// Get the current time
-			now := time.Now()
-
-			// Calculate the next 2 PM
-			nextScrape := time.Date(now.Year(), now.Month(), now.Day(), 2, 0, 0, 0, now.Location())
-			if now.After(nextScrape) {
-				// If it’s already past 2 PM, schedule it for the next day
-				nextScrape = nextScrape.Add(24 * time.Hour)
+			if time.Now().Hour() == 2 {
+				event := Scrape()
+				log.Debug("Sending event in channel")
+				ch <- event
 			}
-
-			// Calculate the duration until the next 2 PM
-			duration := nextScrape.Sub(now)
-
-			// Sleep until the next 2 PM
-			time.Sleep(duration)
 		}
 	}
 }

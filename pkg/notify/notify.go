@@ -41,45 +41,53 @@ func (em *Email) Send() error {
 
 func Notify(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event, cfg *config.Config) {
 	defer wg.Done()
+
+	notifyWg := new(sync.WaitGroup)
+
 	for {
 		select {
 		case <-ctx.Done():
 			log.Info("Killing notify routine")
+			notifyWg.Wait()
 			return
 		case event := <-ch:
-			// Get the current time
-			now := time.Now()
-
-			// Calculate the next 2 PM
-			nextNotify := time.Date(now.Year(), now.Month(), now.Day(), 15, 0, 0, 0, now.Location())
-
-			if now.After(nextNotify) {
-				// If it’s already past 2 PM, schedule it for the next day
-				nextNotify = nextNotify.Add(24 * time.Hour)
-			}
-
-			// Calculate the duration until the next 2 PM
-			duration := nextNotify.Sub(now)
-
-			// Sleep until the next 2 PM
-			time.Sleep(duration)
-
 			today := time.Now().Format("2006-01-02")
 			if event.Date == today {
 				log.Info(fmt.Sprintf("Sending emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
-				for _, recipient := range cfg.Emails {
-					m := &Email{
-						FromName:  "Sentinel",
-						FromEmail: cfg.Sender,
-						Password:  cfg.Password,
-						ToEmail:   recipient,
-						Subject:   "Sentinel Report",
-						Message:   fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes. Recommended to approach via Harry Hines Blvd.", event.Title, event.Start),
+
+				notifyWg.Add(1)
+				go func(wg *sync.WaitGroup, event scraper.Event, timer int) {
+					for {
+						select {
+						case <-ctx.Done():
+							log.Info("Killing email routine")
+							wg.Done()
+							return
+						default:
+							if time.Now().Hour() == timer {
+								for _, recipient := range cfg.Emails {
+									m := &Email{
+										FromName:  "Sentinel",
+										FromEmail: cfg.Sender,
+										Password:  cfg.Password,
+										ToEmail:   recipient,
+										Subject:   "Sentinel Report",
+										Message:   fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes. Recommended to approach via Harry Hines Blvd.", event.Title, event.Start),
+									}
+									if err := m.Send(); err != nil {
+										log.Error(err.Error(), "SERVICE", "NOTIFY")
+									}
+								}
+								log.Info("Emails sent, killing routine")
+								wg.Done()
+								return
+							} else {
+								log.Debug("Its not 3pm yet")
+							}
+						}
 					}
-					if err := m.Send(); err != nil {
-						log.Error(err.Error(), "SERVICE", "NOTIFY")
-					}
-				}
+				}(notifyWg, event, 15)
+
 			} else {
 				log.Info("No event today", "SERIVCE", "NOTIFY")
 			}
