@@ -64,7 +64,7 @@ func Scrape() Event {
 
 		if isoDate == today {
 			event = Event{Date: isoDate, Start: timeStr, Title: title}
-			log.Info(fmt.Sprintf("Found event today: %s", event.Title))
+			log.Info(fmt.Sprintf("Found event today: %+v", event))
 		}
 	})
 	err := c.Visit("https://www.americanairlinescenter.com/events")
@@ -87,10 +87,11 @@ func FetchEvents(ctx context.Context, wg *sync.WaitGroup, ch chan<- Event) {
 			// scrape events
 			event_tmp := Scrape()
 			if reflect.DeepEqual(event_tmp, event_tmp) {
-				log.Debug("Event is new, sending event in channel")
-				ch <- event
-			} else {
 				log.Debug("Event is duplicate, not sending")
+			} else {
+				log.Debug("Event is new, sending event in channel")
+				event = event_tmp
+				ch <- event
 			}
 			time.Sleep(1 * time.Minute)
 		}
