@@ -29,7 +29,7 @@ func writeScreen(wg *sync.WaitGroup, event scraper.Event, quit <-chan bool) {
 	for {
 		select {
 		case <-quit:
-			log.Info("Quit recieved, killing routine")
+			log.Info("Quit recieved, killing screen write routine")
 			return
 		default:
 			// write time first because this is static
@@ -71,7 +71,6 @@ func Update(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event) {
 
 	// wait for first event and launch initial routine
 	event := <-ch
-	log.Info("Launching initial screen write routine")
 	go writeScreen(writeWg, event, quit)
 	writeWg.Add(1) // add wait
 
@@ -79,10 +78,9 @@ func Update(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Info("Killing display routine and children")
 			quit <- true
 			writeWg.Wait()
-			log.Debug("Screen write waitgroup done, display routine exiting")
+			log.Debug("Display routine exiting")
 			return
 		case event := <-ch:
 			// when new event enters the channel, kill old screen write routine
