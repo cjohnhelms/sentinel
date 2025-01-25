@@ -29,7 +29,7 @@ func main() {
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 
 	data := make(chan scraper.Event, 1)
-	go scraper.FetchEvents(ctx, cfg, wg, data)
+	go scraper.Run(ctx, cfg, wg, data)
 	go display.Update(ctx, wg, data)
 
 	<-sig

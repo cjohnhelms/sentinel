@@ -5,11 +5,13 @@ import (
 )
 
 type Config struct {
-	Sender   string
-	Password string
-	Emails   [2]string
-	LogLevel string
-	Version  string
+	Sender     string
+	Password   string
+	Emails     [2]string
+	LogLevel   string
+	Version    string
+	ScrapeTime string
+	EmailTime  string
 }
 
 func New() *Config {
@@ -20,7 +22,9 @@ func New() *Config {
 		Emails: [2]string{
 			envFile["CHRIS_EMAIL"], envFile["KYLE_EMAIL"],
 		},
-		LogLevel: envFile["LOG_LEVEL"],
-		Version:  envFile["VERSION"],
+		LogLevel:   envFile["LOG_LEVEL"],
+		Version:    envFile["VERSION"],
+		ScrapeTime: envFile["SCRAPE_TIME"],
+		EmailTime:  envFile["EMAIL_TIME"],
 	}
 }
