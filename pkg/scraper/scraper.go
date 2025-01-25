@@ -125,8 +125,6 @@ func Scrape(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) Event {
 					}
 				}
 			}(wg, cfg, event)
-		} else {
-			log.Info("No event today")
 		}
 	})
 	err := c.Visit("https://www.americanairlinescenter.com/events")
