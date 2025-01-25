@@ -64,13 +64,14 @@ func writeScreen(wg *sync.WaitGroup, event scraper.Event, quit <-chan bool) {
 func Update(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event) {
 	defer wg.Done()
 
-	time.Sleep(1 * time.Second)
+	time.Sleep(10 * time.Second)
 
 	quit := make(chan bool, 1)
 	writeWg := new(sync.WaitGroup)
 
 	// wait for first event and launch initial routine
 	event := <-ch
+	log.Info("Launching initial screen write routine")
 	go writeScreen(writeWg, event, quit)
 	writeWg.Add(1) // add wait
 
