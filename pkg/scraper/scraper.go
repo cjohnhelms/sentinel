@@ -4,12 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/smtp"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/gocolly/colly"
 
+	"github.com/cjohnhelms/sentinel/pkg/config"
 	log "github.com/cjohnhelms/sentinel/pkg/logging"
 )
 
@@ -17,6 +19,32 @@ type Event struct {
 	Date  string
 	Start string
 	Title string
+}
+
+type Email struct {
+	Password  string
+	FromName  string
+	FromEmail string
+	ToEmail   string
+	Subject   string
+	Message   string
+}
+
+func (em *Email) Send() error {
+	auth := smtp.PlainAuth("", em.FromEmail, em.Password, "smtp.gmail.com")
+	msg := fmt.Sprintf("From: %s %s\nTo: %s\nSubject: %s\n\n%s", em.FromName, em.FromEmail, em.ToEmail, em.Subject, em.Message)
+
+	err := smtp.SendMail("smtp.gmail.com:587",
+		auth,
+		em.FromEmail,
+		[]string{em.ToEmail},
+		[]byte(msg),
+	)
+	if err != nil {
+		return errors.New("smtp error: " + err.Error())
+	}
+	log.Info("Successfully sent to "+em.ToEmail, "SERIVCE", "NOTIFY")
+	return nil
 }
 
 func parseDt(dt string) (string, string, error) {
@@ -31,7 +59,7 @@ func parseDt(dt string) (string, string, error) {
 	return isoDate, timeStr, nil
 }
 
-func Scrape() Event {
+func Scrape(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) Event {
 	today := time.Now().Format("2006-01-02")
 
 	var event = Event{
@@ -63,7 +91,40 @@ func Scrape() Event {
 
 		if isoDate == today {
 			event = Event{Date: isoDate, Start: timeStr, Title: title}
-			log.Info(fmt.Sprintf("Found event today: %s", event.Title))
+			log.Info(fmt.Sprintf("Found event today, queueing email: %+v", event))
+
+			wg.Add(1)
+			go func(wg *sync.WaitGroup, cfg *config.Config, event Event, timer int) {
+				log.Info("Send email routine launched")
+				for {
+					select {
+					case <-ctx.Done():
+						log.Info("Killing email routine")
+						wg.Done()
+						return
+					default:
+						if time.Now().Hour() == timer {
+							log.Info(fmt.Sprintf("Sending emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
+							for _, recipient := range cfg.Emails {
+								m := &Email{
+									FromName:  "Sentinel",
+									FromEmail: cfg.Sender,
+									Password:  cfg.Password,
+									ToEmail:   recipient,
+									Subject:   "Sentinel Report",
+									Message:   fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes. Recommended to approach via Harry Hines Blvd.", event.Title, event.Start),
+								}
+								if err := m.Send(); err != nil {
+									log.Error(err.Error(), "SERVICE", "NOTIFY")
+								}
+							}
+							log.Info("Emails sent, killing routine")
+							wg.Done()
+							return
+						}
+					}
+				}
+			}(wg, cfg, event, 15)
 		}
 	})
 	err := c.Visit("https://www.americanairlinescenter.com/events")
@@ -74,11 +135,11 @@ func Scrape() Event {
 	return event
 }
 
-func FetchEvents(ctx context.Context, wg *sync.WaitGroup, ch chan<- Event) {
+func FetchEvents(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, ch chan<- Event) {
 	defer wg.Done()
 
 	// send inital scrape
-	event := Scrape()
+	event := Scrape(ctx, cfg, wg)
 	ch <- event
 
 	for {
@@ -89,10 +150,11 @@ func FetchEvents(ctx context.Context, wg *sync.WaitGroup, ch chan<- Event) {
 		default:
 			// scrape events
 			if time.Now().Hour() == 2 && time.Now().Minute() == 0 && time.Now().Second() == 0 {
-				event := Scrape()
+				event := Scrape(ctx, cfg, wg)
 				log.Debug("Sending event in channel")
 				ch <- event
 			}
+			time.Sleep(10 * time.Minute)
 		}
 	}
 }
