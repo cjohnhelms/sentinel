@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/smtp"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -96,10 +95,6 @@ func Scrape(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) Event {
 
 			wg.Add(1)
 			go func(wg *sync.WaitGroup, cfg *config.Config, event Event) {
-				h, err := strconv.Atoi(cfg.EmailTime)
-				if err != nil {
-					log.Error("Cannot parse email time")
-				}
 				log.Info("Email queued")
 				for {
 					select {
@@ -108,7 +103,7 @@ func Scrape(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) Event {
 						wg.Done()
 						return
 					default:
-						if time.Now().Hour() == h {
+						if time.Now().Hour() == cfg.EmailTime {
 							log.Info(fmt.Sprintf("Sending emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
 							for _, recipient := range cfg.Emails {
 								m := &Email{
@@ -155,12 +150,8 @@ func Run(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, ch chan<- 
 			log.Info("Killing scraper routine")
 			return
 		default:
-			h, err := strconv.Atoi(cfg.ScrapeTime)
-			if err != nil {
-				log.Error("Cannot parse scrape time")
-			}
 			// scrape events
-			if time.Now().Hour() == h && time.Now().Minute() == 0 && time.Now().Second() == 0 {
+			if time.Now().Hour() == cfg.ScrapeTime && time.Now().Minute() == 0 && time.Now().Second() == 0 {
 				event := Scrape(ctx, cfg, wg)
 				log.Debug("Sending event in channel")
 				ch <- event

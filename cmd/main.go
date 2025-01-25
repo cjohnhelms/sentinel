@@ -16,7 +16,10 @@ import (
 )
 
 func main() {
-	cfg := config.New()
+	cfg, err := config.New()
+	if err != nil {
+		panic(err)
+	}
 
 	log.Info("Service starting")
 	log.Debug(fmt.Sprintf("Config: %+v", cfg))
