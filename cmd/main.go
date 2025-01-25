@@ -22,16 +22,15 @@ func main() {
 	log.Debug(fmt.Sprintf("Config: %+v", cfg))
 
 	wg := new(sync.WaitGroup)
-	wg.Add(3)
+	wg.Add(2)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	sig := make(chan os.Signal, 1)
 	signal.Notify(sig, os.Interrupt, syscall.SIGTERM)
 
 	data := make(chan scraper.Event, 1)
-	go scraper.FetchEvents(ctx, wg, data)
+	go scraper.FetchEvents(ctx, cfg, wg, data)
 	go display.Update(ctx, wg, data)
-	// go notify.Notify(ctx, wg, data, cfg)
 
 	<-sig
 	log.Error("Cancel recieved, killing routines")
