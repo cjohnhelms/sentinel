@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/smtp"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -94,7 +95,11 @@ func Scrape(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) Event {
 			log.Info(fmt.Sprintf("Found event today, queueing email: %+v", event))
 
 			wg.Add(1)
-			go func(wg *sync.WaitGroup, cfg *config.Config, event Event, timer int) {
+			go func(wg *sync.WaitGroup, cfg *config.Config, event Event) {
+				h, err := strconv.Atoi(cfg.EmailTime)
+				if err != nil {
+					log.Error("Cannot parse email time")
+				}
 				log.Info("Email queued")
 				for {
 					select {
@@ -103,7 +108,7 @@ func Scrape(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) Event {
 						wg.Done()
 						return
 					default:
-						if time.Now().Hour() == timer {
+						if time.Now().Hour() == h {
 							log.Info(fmt.Sprintf("Sending emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
 							for _, recipient := range cfg.Emails {
 								m := &Email{
@@ -124,7 +129,7 @@ func Scrape(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) Event {
 						}
 					}
 				}
-			}(wg, cfg, event, 15)
+			}(wg, cfg, event)
 		} else {
 			log.Info("No event today")
 		}
@@ -137,7 +142,7 @@ func Scrape(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) Event {
 	return event
 }
 
-func FetchEvents(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, ch chan<- Event) {
+func Run(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, ch chan<- Event) {
 	defer wg.Done()
 
 	// send inital scrape
@@ -150,8 +155,12 @@ func FetchEvents(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, ch
 			log.Info("Killing scraper routine")
 			return
 		default:
+			h, err := strconv.Atoi(cfg.ScrapeTime)
+			if err != nil {
+				log.Error("Cannot parse scrape time")
+			}
 			// scrape events
-			if time.Now().Hour() == 2 && time.Now().Minute() == 0 && time.Now().Second() == 0 {
+			if time.Now().Hour() == h && time.Now().Minute() == 0 && time.Now().Second() == 0 {
 				event := Scrape(ctx, cfg, wg)
 				log.Debug("Sending event in channel")
 				ch <- event
