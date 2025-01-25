@@ -10,7 +10,10 @@ import (
 var logger *slog.Logger
 
 func init() {
-	cfg := config.New()
+	cfg, err := config.New()
+	if err != nil {
+		panic(err)
+	}
 	var level slog.Level
 
 	switch cfg.LogLevel {

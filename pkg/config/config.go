@@ -1,7 +1,8 @@
 package config
 
 import (
-	"github.com/joho/godotenv"
+	"os"
+	"strconv"
 )
 
 type Config struct {
@@ -10,21 +11,28 @@ type Config struct {
 	Emails     [2]string
 	LogLevel   string
 	Version    string
-	ScrapeTime string
-	EmailTime  string
+	ScrapeTime int
+	EmailTime  int
 }
 
-func New() *Config {
-	envFile, _ := godotenv.Read(".env")
-	return &Config{
-		Sender:   envFile["SENDER"],
-		Password: envFile["PASSWORD"],
-		Emails: [2]string{
-			envFile["CHRIS_EMAIL"], envFile["KYLE_EMAIL"],
-		},
-		LogLevel:   envFile["LOG_LEVEL"],
-		Version:    envFile["VERSION"],
-		ScrapeTime: envFile["SCRAPE_TIME"],
-		EmailTime:  envFile["EMAIL_TIME"],
+func New() (*Config, error) {
+	s, err := strconv.Atoi(os.Getenv("SCRAPE_TIME"))
+	if err != nil {
+		return nil, err
 	}
+	e, err := strconv.Atoi(os.Getenv("EMAIL_TIME"))
+	if err != nil {
+		return nil, err
+	}
+	return &Config{
+		Sender:   os.Getenv("SENDER"),
+		Password: os.Getenv("PASSWORD"),
+		Emails: [2]string{
+			os.Getenv("CHRIS_EMAIL"), os.Getenv("KYLE_EMAIL"),
+		},
+		LogLevel:   os.Getenv("LOG_LEVEL"),
+		Version:    os.Getenv("VERSION"),
+		ScrapeTime: s,
+		EmailTime:  e,
+	}, nil
 }
