@@ -23,7 +23,7 @@ func main() {
 	log.Debug(fmt.Sprintf("Config: %+v", cfg))
 
 	wg := new(sync.WaitGroup)
-	wg.Add(2)
+	wg.Add(3)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	sig := make(chan os.Signal, 1)
