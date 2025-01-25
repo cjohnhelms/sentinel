@@ -88,7 +88,7 @@ func FetchEvents(ctx context.Context, wg *sync.WaitGroup, ch chan<- Event) {
 			return
 		default:
 			// scrape events
-			if time.Now().Hour() == 2 {
+			if time.Now().Hour() == 2 && time.Now().Minute() == 0 && time.Now().Second() == 0 {
 				event := Scrape()
 				log.Debug("Sending event in channel")
 				ch <- event
