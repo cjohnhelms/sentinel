@@ -53,10 +53,10 @@ func Notify(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event, cf
 		case event := <-ch:
 			today := time.Now().Format("2006-01-02")
 			if event.Date == today {
-				log.Info(fmt.Sprintf("Sending emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
 
 				notifyWg.Add(1)
 				go func(wg *sync.WaitGroup, event scraper.Event, timer int) {
+					log.Info("Send email routine launched")
 					for {
 						select {
 						case <-ctx.Done():
@@ -65,6 +65,7 @@ func Notify(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event, cf
 							return
 						default:
 							if time.Now().Hour() == timer {
+								log.Info(fmt.Sprintf("Sending emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
 								for _, recipient := range cfg.Emails {
 									m := &Email{
 										FromName:  "Sentinel",
@@ -81,8 +82,6 @@ func Notify(ctx context.Context, wg *sync.WaitGroup, ch <-chan scraper.Event, cf
 								log.Info("Emails sent, killing routine")
 								wg.Done()
 								return
-							} else {
-								log.Debug("Its not 3pm yet")
 							}
 						}
 					}
