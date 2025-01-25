@@ -95,7 +95,7 @@ func Scrape(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) Event {
 
 			wg.Add(1)
 			go func(wg *sync.WaitGroup, cfg *config.Config, event Event, timer int) {
-				log.Info("Send email routine launched")
+				log.Info("Email queued")
 				for {
 					select {
 					case <-ctx.Done():
@@ -125,6 +125,8 @@ func Scrape(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) Event {
 					}
 				}
 			}(wg, cfg, event, 15)
+		} else {
+			log.Info("No event today")
 		}
 	})
 	err := c.Visit("https://www.americanairlinescenter.com/events")
@@ -154,7 +156,7 @@ func FetchEvents(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, ch
 				log.Debug("Sending event in channel")
 				ch <- event
 			}
-			time.Sleep(10 * time.Minute)
+			time.Sleep(1 * time.Minute)
 		}
 	}
 }
