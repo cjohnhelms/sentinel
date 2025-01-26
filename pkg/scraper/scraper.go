@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net/smtp"
 	"strings"
 	"sync"
 	"time"
@@ -12,40 +11,10 @@ import (
 	"github.com/gocolly/colly"
 
 	"github.com/cjohnhelms/sentinel/pkg/config"
+	"github.com/cjohnhelms/sentinel/pkg/email"
 	log "github.com/cjohnhelms/sentinel/pkg/logging"
+	"github.com/cjohnhelms/sentinel/pkg/structs"
 )
-
-type Event struct {
-	Date  string
-	Start string
-	Title string
-}
-
-type Email struct {
-	Password  string
-	FromName  string
-	FromEmail string
-	ToEmail   string
-	Subject   string
-	Message   string
-}
-
-func (em *Email) Send() error {
-	auth := smtp.PlainAuth("", em.FromEmail, em.Password, "smtp.gmail.com")
-	msg := fmt.Sprintf("From: %s %s\nTo: %s\nSubject: %s\n\n%s", em.FromName, em.FromEmail, em.ToEmail, em.Subject, em.Message)
-
-	err := smtp.SendMail("smtp.gmail.com:587",
-		auth,
-		em.FromEmail,
-		[]string{em.ToEmail},
-		[]byte(msg),
-	)
-	if err != nil {
-		return errors.New("smtp error: " + err.Error())
-	}
-	log.Info("Successfully sent to "+em.ToEmail, "SERIVCE", "NOTIFY")
-	return nil
-}
 
 func parseDt(dt string) (string, string, error) {
 	cleaned := strings.Split(strings.Join(strings.Fields(dt), " "), " - ")
@@ -59,10 +28,10 @@ func parseDt(dt string) (string, string, error) {
 	return isoDate, timeStr, nil
 }
 
-func Scrape(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) Event {
+func scrape() structs.Event {
 	today := time.Now().Format("2006-01-02")
 
-	var event = Event{
+	var event = structs.Event{
 		Title: "No event today",
 		Start: "",
 		Date:  "",
@@ -90,41 +59,10 @@ func Scrape(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) Event {
 		}
 
 		if isoDate == today {
-			event = Event{Date: isoDate, Start: timeStr, Title: title}
+			event.Date = isoDate
+			event.Start = timeStr
+			event.Title = title
 			log.Info(fmt.Sprintf("Found event today, queueing email: %+v", event))
-
-			wg.Add(1)
-			go func(wg *sync.WaitGroup, cfg *config.Config, event Event) {
-				log.Info("Email queued")
-				for {
-					select {
-					case <-ctx.Done():
-						log.Info("Killing email routine")
-						wg.Done()
-						return
-					default:
-						if time.Now().Hour() == cfg.EmailTime {
-							log.Info(fmt.Sprintf("Sending emails to: %v", cfg.Emails), "SERVICE", "NOTIFY")
-							for _, recipient := range cfg.Emails {
-								m := &Email{
-									FromName:  "Sentinel",
-									FromEmail: cfg.Sender,
-									Password:  cfg.Password,
-									ToEmail:   recipient,
-									Subject:   "Sentinel Report",
-									Message:   fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes. Recommended to approach via Harry Hines Blvd.", event.Title, event.Start),
-								}
-								if err := m.Send(); err != nil {
-									log.Error(err.Error(), "SERVICE", "NOTIFY")
-								}
-							}
-							log.Info("Emails sent, killing routine")
-							wg.Done()
-							return
-						}
-					}
-				}
-			}(wg, cfg, event)
 		}
 	})
 	err := c.Visit("https://www.americanairlinescenter.com/events")
@@ -135,26 +73,43 @@ func Scrape(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) Event {
 	return event
 }
 
-func Run(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, ch chan<- Event) {
+func Run(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) {
 	defer wg.Done()
 
-	// send inital scrape
-	event := Scrape(ctx, cfg, wg)
-	ch <- event
+	// run initial
+	event := scrape()
+	today := time.Now().Format("2006-01-02")
+	if event.Date == today {
+		log.Debug("Initial scrape found event today, scheduling email")
+		wg.Add(1)
+		go email.ScheduleEmail(ctx, cfg, wg, event)
+	}
 
 	for {
+		now := time.Now()
+		next := time.Date(now.Year(), now.Month(), now.Day(), cfg.ScrapeHour, cfg.ScrapeMin, 0, 0, now.Location())
+
+		if now.After(next) {
+			// if past 2 PM, schedule it for the next day
+			next = next.Add(24 * time.Hour)
+		}
+
+		duration := time.Until(next)
+		log.Debug(fmt.Sprintf("Scraping again in %v", duration))
+		timer := time.NewTimer(duration)
+
 		select {
 		case <-ctx.Done():
-			log.Info("Killing scraper routine")
+			log.Info("Scraper routine recieved signal, killing")
 			return
-		default:
-			// scrape events
-			if time.Now().Hour() == cfg.ScrapeTime && time.Now().Minute() == 0 && time.Now().Second() == 0 {
-				event := Scrape(ctx, cfg, wg)
-				log.Debug("Sending event in channel")
-				ch <- event
+		case <-timer.C:
+			event := scrape()
+			today := time.Now().Format("2006-01-02")
+			if event.Date == today {
+				wg.Add(1)
+				go email.ScheduleEmail(ctx, cfg, wg, event)
 			}
-			time.Sleep(1 * time.Minute)
 		}
 	}
+
 }
