@@ -1,19 +1,20 @@
 package scraper
 
 import (
+	"context"
 	"errors"
-	"log"
+	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gocolly/colly"
-)
 
-type Event struct {
-	Date  string
-	Start string
-	Title string
-}
+	"github.com/cjohnhelms/sentinel/pkg/config"
+	"github.com/cjohnhelms/sentinel/pkg/email"
+	log "github.com/cjohnhelms/sentinel/pkg/logging"
+	"github.com/cjohnhelms/sentinel/pkg/structs"
+)
 
 func parseDt(dt string) (string, string, error) {
 	cleaned := strings.Split(strings.Join(strings.Fields(dt), " "), " - ")
@@ -27,26 +28,26 @@ func parseDt(dt string) (string, string, error) {
 	return isoDate, timeStr, nil
 }
 
-func Scrape() Event {
+func scrape() structs.Event {
 	today := time.Now().Format("2006-01-02")
 
-	var event = Event{
+	var event = structs.Event{
 		Title: "No event today",
 		Start: "",
-		Date: "",
+		Date:  "",
 	}
 
 	c := colly.NewCollector(
 		colly.AllowedDomains("www.americanairlinescenter.com"))
 
 	c.OnRequest(func(r *colly.Request) {
-		log.Println("Visiting: ", r.URL.String())
+		log.Info(fmt.Sprintf("Visiting: %s", r.URL.String()))
 	})
 	c.OnResponse(func(r *colly.Response) {
-		log.Println("Visited: ", r.Request.URL.String())
+		log.Info(fmt.Sprintf("Visited: %s", r.Request.URL.String()))
 	})
 	c.OnError(func(r *colly.Response, err error) {
-		log.Println("Failed to scrape page: ", err)
+		log.Info(fmt.Sprintf("Failed to scrape page: %s", err))
 	})
 	c.OnHTML("div.info.clearfix", func(e *colly.HTMLElement) {
 		dt := e.ChildText("div.date")
@@ -54,43 +55,61 @@ func Scrape() Event {
 
 		isoDate, timeStr, err := parseDt(dt)
 		if err != nil {
-			log.Println(err)
+			log.Error(err.Error())
 		}
 
 		if isoDate == today {
-			event = Event{Date: isoDate, Start: timeStr, Title: title}
-			log.Println("Found event today:", event.Title)
+			event.Date = isoDate
+			event.Start = timeStr
+			event.Title = title
+			log.Info(fmt.Sprintf("Found event today, queueing email: %+v", event))
 		}
 	})
 	err := c.Visit("https://www.americanairlinescenter.com/events")
 	if err != nil {
-		log.Printf("Failed: %s\n", err)
+		log.Error(fmt.Sprintf("Failed: %s\n", err))
 	}
 
 	return event
 }
 
-func FetchEvents(ch chan<- Event) {
+func Run(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) {
+	defer wg.Done()
+
+	// run initial
+	event := scrape()
+	today := time.Now().Format("2006-01-02")
+	if event.Date == today {
+		log.Debug("Initial scrape found event today, scheduling email")
+		wg.Add(1)
+		go email.ScheduleEmail(ctx, cfg, wg, event)
+	}
+
 	for {
-		// scrape events
-		event := Scrape()
-		ch <- event
-
-		// Get the current time
 		now := time.Now()
+		next := time.Date(now.Year(), now.Month(), now.Day(), cfg.ScrapeHour, cfg.ScrapeMin, 0, 0, now.Location())
 
-		// Calculate the next 2 PM
-		nextScrape := time.Date(now.Year(), now.Month(), now.Day(), 2, 0, 0, 0, now.Location())
-		if now.After(nextScrape) {
-			// If it’s already past 2 PM, schedule it for the next day
-			nextScrape = nextScrape.Add(24 * time.Hour)
+		if now.After(next) {
+			// if past 2 PM, schedule it for the next day
+			next = next.Add(24 * time.Hour)
 		}
 
-		// Calculate the duration until the next 2 PM
-		duration := nextScrape.Sub(now)
+		duration := time.Until(next)
+		log.Debug(fmt.Sprintf("Scraping again in %v", duration))
+		timer := time.NewTimer(duration)
 
-		// Sleep until the next 2 PM
-		time.Sleep(duration)
-
+		select {
+		case <-ctx.Done():
+			log.Info("Scraper routine recieved signal, killing")
+			return
+		case <-timer.C:
+			event := scrape()
+			today := time.Now().Format("2006-01-02")
+			if event.Date == today {
+				wg.Add(1)
+				go email.ScheduleEmail(ctx, cfg, wg, event)
+			}
+		}
 	}
+
 }
