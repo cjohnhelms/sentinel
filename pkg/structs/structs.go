@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/smtp"
 
+	"github.com/cjohnhelms/sentinel/pkg/config"
 	log "github.com/cjohnhelms/sentinel/pkg/logging"
 )
 
@@ -15,21 +16,19 @@ type Event struct {
 }
 
 type Email struct {
-	Password  string
-	FromName  string
-	FromEmail string
-	ToEmail   string
-	Subject   string
-	Message   string
+	FromName string
+	ToEmail  string
+	Subject  string
+	Message  string
 }
 
-func (em *Email) Send() error {
-	auth := smtp.PlainAuth("", em.FromEmail, em.Password, "smtp.gmail.com")
-	msg := fmt.Sprintf("From: %s %s\nTo: %s\nSubject: %s\n\n%s", em.FromName, em.FromEmail, em.ToEmail, em.Subject, em.Message)
+func (em *Email) Send(cfg *config.Config) error {
+	auth := smtp.PlainAuth("", cfg.Sender, cfg.Password, "smtp.gmail.com")
+	msg := fmt.Sprintf("From: %s %s\nTo: %s\nSubject: %s\n\n%s", em.FromName, cfg.Sender, em.ToEmail, em.Subject, em.Message)
 
 	err := smtp.SendMail("smtp.gmail.com:587",
 		auth,
-		em.FromEmail,
+		cfg.Sender,
 		[]string{em.ToEmail},
 		[]byte(msg),
 	)
