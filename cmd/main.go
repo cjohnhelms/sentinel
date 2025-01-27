@@ -45,8 +45,9 @@ func main() {
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
+		log.Info("Starting metrics server")
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			log.Error("HTTP server error: %v", err)
+			log.Error("HTTP server error: %v", err.Error())
 		}
 		log.Info("Metrics server stopped serving new connections.")
 	}(wg)
