@@ -35,14 +35,12 @@ func ScheduleEmail(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, 
 		case <-timer.C:
 			for _, recipient := range cfg.Emails {
 				m := &structs.Email{
-					FromName:  "Sentinel",
-					FromEmail: cfg.Sender,
-					Password:  cfg.Password,
-					ToEmail:   recipient,
-					Subject:   "Sentinel Report",
-					Message:   fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes. Recommended to approach via Harry Hines Blvd.", event.Title, event.Start),
+					FromName: "Sentinel",
+					ToEmail:  recipient,
+					Subject:  "Sentinel Report",
+					Message:  fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes. Recommended to approach via Harry Hines Blvd.", event.Title, event.Start),
 				}
-				if err := m.Send(); err != nil {
+				if err := m.Send(cfg); err != nil {
 					log.Error(err.Error(), "SERVICE", "NOTIFY")
 				} else {
 					log.Info(fmt.Sprintf("Successful email: %s", recipient))
