@@ -23,7 +23,6 @@ jobs:
       id: date
       run: echo "::set-output name=date::\"$(date +'%B %d'), $(date +%Y)\""
 
-
     - name: Build
       run: go build -v ./...
 
