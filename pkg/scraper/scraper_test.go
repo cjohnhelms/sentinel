@@ -7,7 +7,10 @@ import (
 )
 
 func TestDateVerification(t *testing.T) {
-	raw := os.Getenv("EVENT")
+	raw, ok := os.LookupEnv("EVENT")
+	if !ok {
+		t.Fatal("Env variable ENV is unset")
+	}
 
 	date, _, err := parseDt(raw)
 	if err != nil {
