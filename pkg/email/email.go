@@ -39,7 +39,7 @@ func ScheduleEmail(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, 
 					FromName: "Sentinel",
 					ToEmail:  recipient,
 					Subject:  "Sentinel Report",
-					Message:  fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes. Recommended to approach via Harry Hines Blvd.", event.Title, event.Start),
+					Message:  fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes.", event.Title, event.Start),
 				}
 				if err := m.Send(cfg); err != nil {
 					logger.Error(err.Error(), "SERVICE", "NOTIFY")
