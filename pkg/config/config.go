@@ -65,8 +65,8 @@ func New() (*Config, error) {
 	handlerOpts := &slog.HandlerOptions{
 		Level: level,
 	}
-	textHandler := slog.NewJSONHandler(os.Stdout, handlerOpts)
-	logger := slog.New(textHandler)
+	jsonHandler := slog.NewJSONHandler(os.Stdout, handlerOpts)
+	logger := slog.New(jsonHandler)
 
 	// get times or set defaults
 	sh, err := strconv.Atoi(os.Getenv("SCRAPE_HOUR"))

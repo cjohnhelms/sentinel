@@ -17,8 +17,6 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
-type loggerKey struct{}
-
 func main() {
 	cfg, err := config.New()
 	if err != nil {
@@ -50,7 +48,7 @@ func main() {
 		defer wg.Done()
 		logger.Info("Starting metrics server")
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			logger.Error("HTTP server error: %v", err.Error())
+			logger.Error(fmt.Sprintf("HTTP server error: %v", err.Error()))
 		}
 		logger.Info("Metrics server stopped serving new connections.")
 	}(wg)
@@ -61,7 +59,7 @@ func main() {
 	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownRelease()
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		logger.Error("HTTP shutdown error: %v", err)
+		logger.Error(fmt.Sprintf("HTTP shutdown error: %v", err.Error()))
 	}
 
 	cancel()
