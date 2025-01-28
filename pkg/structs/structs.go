@@ -6,7 +6,6 @@ import (
 	"net/smtp"
 
 	"github.com/cjohnhelms/sentinel/pkg/config"
-	log "github.com/cjohnhelms/sentinel/pkg/logging"
 )
 
 type Event struct {
@@ -23,6 +22,8 @@ type Email struct {
 }
 
 func (em *Email) Send(cfg *config.Config) error {
+	logger := cfg.Logger
+
 	auth := smtp.PlainAuth("", cfg.Sender, cfg.Password, "smtp.gmail.com")
 	msg := fmt.Sprintf("From: %s %s\nTo: %s\nSubject: %s\n\n%s", em.FromName, cfg.Sender, em.ToEmail, em.Subject, em.Message)
 
@@ -35,6 +36,6 @@ func (em *Email) Send(cfg *config.Config) error {
 	if err != nil {
 		return errors.New("smtp error: " + err.Error())
 	}
-	log.Info("Successfully sent to "+em.ToEmail, "SERIVCE", "NOTIFY")
+	logger.Info("Successfully sent to "+em.ToEmail, "SERIVCE", "NOTIFY")
 	return nil
 }

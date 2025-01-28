@@ -2,6 +2,7 @@ package config
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -11,7 +12,7 @@ type Config struct {
 	Sender     string
 	Password   string
 	Emails     []string
-	LogLevel   string
+	Logger     *slog.Logger
 	Version    string
 	ScrapeHour int
 	ScrapeMin  int
@@ -24,6 +25,8 @@ func newErr(env string) error {
 }
 
 func New() (*Config, error) {
+	var level slog.Level
+
 	var sh int
 	var sm int
 	var eh int
@@ -50,6 +53,21 @@ func New() (*Config, error) {
 		return nil, newErr("SENDER")
 	}
 
+	switch loglvl {
+	case "DEBUG":
+		level = slog.LevelDebug
+	case "INFO":
+		level = slog.LevelInfo
+	default:
+		level = slog.LevelInfo
+
+	}
+	handlerOpts := &slog.HandlerOptions{
+		Level: level,
+	}
+	textHandler := slog.NewJSONHandler(os.Stdout, handlerOpts)
+	logger := slog.New(textHandler)
+
 	// get times or set defaults
 	sh, err := strconv.Atoi(os.Getenv("SCRAPE_HOUR"))
 	if err != nil {
@@ -71,7 +89,7 @@ func New() (*Config, error) {
 		Sender:     sender,
 		Password:   password,
 		Emails:     strings.Split(emails, ","),
-		LogLevel:   loglvl,
+		Logger:     logger,
 		Version:    version,
 		ScrapeHour: sh,
 		ScrapeMin:  sm,
