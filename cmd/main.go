@@ -14,7 +14,6 @@ import (
 	"github.com/cjohnhelms/sentinel/pkg/config"
 	"github.com/cjohnhelms/sentinel/pkg/scraper"
 
-	log "github.com/cjohnhelms/sentinel/pkg/logging"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -24,8 +23,10 @@ func main() {
 		panic(err)
 	}
 
-	log.Info("Service starting")
-	log.Debug(fmt.Sprintf("Config: %+v", cfg))
+	logger := cfg.Logger
+
+	logger.Info("Service starting")
+	logger.Debug(fmt.Sprintf("Config: %+v", cfg))
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -45,24 +46,24 @@ func main() {
 	wg.Add(1)
 	go func(wg *sync.WaitGroup) {
 		defer wg.Done()
-		log.Info("Starting metrics server")
+		logger.Info("Starting metrics server")
 		if err := server.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
-			log.Error("HTTP server error: %v", err.Error())
+			logger.Error(fmt.Sprintf("HTTP server error: %v", err.Error()))
 		}
-		log.Info("Metrics server stopped serving new connections.")
+		logger.Info("Metrics server stopped serving new connections.")
 	}(wg)
 
 	<-sig
-	log.Info("Main routine recieved signal, waiting")
+	logger.Info("Main routine recieved signal, waiting")
 
 	shutdownCtx, shutdownRelease := context.WithTimeout(context.Background(), 10*time.Second)
 	defer shutdownRelease()
 	if err := server.Shutdown(shutdownCtx); err != nil {
-		log.Error("HTTP shutdown error: %v", err)
+		logger.Error(fmt.Sprintf("HTTP shutdown error: %v", err.Error()))
 	}
 
 	cancel()
 	wg.Wait()
 
-	log.Info("All routines finished")
+	logger.Info("All routines finished")
 }

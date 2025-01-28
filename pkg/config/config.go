@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+	"log/slog"
 	"os"
 	"strconv"
 	"strings"
@@ -10,7 +12,7 @@ type Config struct {
 	Sender     string
 	Password   string
 	Emails     []string
-	LogLevel   string
+	Logger     *slog.Logger
 	Version    string
 	ScrapeHour int
 	ScrapeMin  int
@@ -18,29 +20,77 @@ type Config struct {
 	EmailMin   int
 }
 
+func newErr(env string) error {
+	return fmt.Errorf("env variable %s is unset", env)
+}
+
 func New() (*Config, error) {
+	var level slog.Level
+
+	var sh int
+	var sm int
+	var eh int
+	var em int
+
+	sender, ok := os.LookupEnv("SENDER")
+	if !ok {
+		return nil, newErr("SENDER")
+	}
+	password, ok := os.LookupEnv("SENDER")
+	if !ok {
+		return nil, newErr("SENDER")
+	}
+	emails, ok := os.LookupEnv("SENDER")
+	if !ok {
+		return nil, newErr("SENDER")
+	}
+	loglvl, ok := os.LookupEnv("SENDER")
+	if !ok {
+		return nil, newErr("SENDER")
+	}
+	version, ok := os.LookupEnv("SENDER")
+	if !ok {
+		return nil, newErr("SENDER")
+	}
+
+	switch loglvl {
+	case "DEBUG":
+		level = slog.LevelDebug
+	case "INFO":
+		level = slog.LevelInfo
+	default:
+		level = slog.LevelInfo
+
+	}
+	handlerOpts := &slog.HandlerOptions{
+		Level: level,
+	}
+	jsonHandler := slog.NewJSONHandler(os.Stdout, handlerOpts)
+	logger := slog.New(jsonHandler)
+
+	// get times or set defaults
 	sh, err := strconv.Atoi(os.Getenv("SCRAPE_HOUR"))
 	if err != nil {
-		return nil, err
+		sh = 2
 	}
-	sm, err := strconv.Atoi(os.Getenv("SCRAPE_MIN"))
+	sm, err = strconv.Atoi(os.Getenv("SCRAPE_MIN"))
 	if err != nil {
-		return nil, err
+		sm = 0
 	}
-	eh, err := strconv.Atoi(os.Getenv("EMAIL_HOUR"))
+	eh, err = strconv.Atoi(os.Getenv("EMAIL_HOUR"))
 	if err != nil {
-		return nil, err
+		eh = 3
 	}
-	em, err := strconv.Atoi(os.Getenv("EMAIL_MIN"))
+	em, err = strconv.Atoi(os.Getenv("EMAIL_MIN"))
 	if err != nil {
-		return nil, err
+		em = 0
 	}
 	return &Config{
-		Sender:     os.Getenv("SENDER"),
-		Password:   os.Getenv("PASSWORD"),
-		Emails:     strings.Split(os.Getenv("NOTIFY"), ","),
-		LogLevel:   os.Getenv("LOG_LEVEL"),
-		Version:    os.Getenv("VERSION"),
+		Sender:     sender,
+		Password:   password,
+		Emails:     strings.Split(emails, ","),
+		Logger:     logger,
+		Version:    version,
 		ScrapeHour: sh,
 		ScrapeMin:  sm,
 		EmailHour:  eh,
