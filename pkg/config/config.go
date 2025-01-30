@@ -36,21 +36,21 @@ func New() (*Config, error) {
 	if !ok {
 		return nil, newErr("SENDER")
 	}
-	password, ok := os.LookupEnv("SENDER")
+	password, ok := os.LookupEnv("PASSWORD")
 	if !ok {
-		return nil, newErr("SENDER")
+		return nil, newErr("PASSWORD")
 	}
-	emails, ok := os.LookupEnv("SENDER")
+	emails, ok := os.LookupEnv("NOTIFY")
 	if !ok {
-		return nil, newErr("SENDER")
+		return nil, newErr("NOTIFY")
 	}
-	loglvl, ok := os.LookupEnv("SENDER")
+	loglvl, ok := os.LookupEnv("LOG_LEVEL")
 	if !ok {
-		return nil, newErr("SENDER")
+		return nil, newErr("LOG_LEVEL")
 	}
-	version, ok := os.LookupEnv("SENDER")
+	version, ok := os.LookupEnv("VERSION")
 	if !ok {
-		return nil, newErr("SENDER")
+		return nil, newErr("VERSION")
 	}
 
 	switch loglvl {
