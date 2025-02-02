@@ -78,15 +78,6 @@ func Run(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup) {
 
 	logger := cfg.Logger
 
-	// run initial
-	event := scrape(logger)
-	today := time.Now().Format("2006-01-02")
-	if event.Date == today {
-		logger.Debug("Initial scrape found event today, scheduling email")
-		wg.Add(1)
-		go email.ScheduleEmail(ctx, cfg, wg, event)
-	}
-
 	for {
 		now := time.Now()
 		next := time.Date(now.Year(), now.Month(), now.Day(), cfg.ScrapeHour, cfg.ScrapeMin, 0, 0, now.Location())
