@@ -1,26 +1,18 @@
 package scraper
 
 import (
-	"os"
 	"testing"
 	"time"
+
+	"github.com/cjohnhelms/sentinel/pkg/structs"
 )
 
 func TestDateVerification(t *testing.T) {
-	raw, ok := os.LookupEnv("EVENT")
-	if !ok {
-		t.Fatal("Env variable ENV is unset")
+	event1 := structs.Event{
+		When: time.Now(),
 	}
 
-	date, _, err := parseDt(raw)
-	if err != nil {
-		t.Fatal("Failed to parse date")
+	if !isToday(event1.When) {
+		t.Fatalf("Failed to properly parse event on the current day")
 	}
-
-	today := time.Now().Format("2006-01-02")
-
-	if date != today {
-		t.Fatal("Unable to verify today's date")
-	}
-
 }

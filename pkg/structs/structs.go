@@ -4,14 +4,14 @@ import (
 	"errors"
 	"fmt"
 	"net/smtp"
+	"time"
 
 	"github.com/cjohnhelms/sentinel/pkg/config"
 )
 
 type Event struct {
-	Date  string
-	Start string
 	Title string
+	When  time.Time
 }
 
 type Email struct {
