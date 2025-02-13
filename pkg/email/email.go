@@ -17,16 +17,30 @@ func ScheduleEmail(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, 
 
 	logger.Info("Email queued")
 	for {
-		now := time.Now()
-		next := time.Date(now.Year(), now.Month(), now.Day(), cfg.EmailHour, cfg.EmailMin, 0, 0, now.Location())
+		duration := 4 * time.Hour
+		emailTime := event.When.Add(-duration)
 
-		if now.After(next) {
-			// if past the time, schedule it for the next day
-			next = next.Add(24 * time.Hour)
+		if emailTime.Before(time.Now()) {
+			logger.Error("Email scheduled after the desired email time, sending ASAP")
+			for _, recipient := range cfg.Emails {
+				m := &structs.Email{
+					FromName: "Sentinel",
+					ToEmail:  recipient,
+					Subject:  "Sentinel Report",
+					Message:  fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes.", event.Title, event.When.Format("3:04 PM")),
+				}
+				if err := m.Send(cfg); err != nil {
+					logger.Error(err.Error(), "SERVICE", "NOTIFY")
+				} else {
+					logger.Info(fmt.Sprintf("Successful email: %s", recipient))
+				}
+			}
+			logger.Info("Email process complete, killing routine")
+			return
 		}
 
-		duration := time.Until(next)
-		logger.Debug(fmt.Sprintf("Sending email in %v", duration))
+		wait := time.Until(emailTime)
+		logger.Debug(fmt.Sprintf("Sending email in %v", wait))
 		timer := time.NewTimer(duration)
 
 		select {
@@ -39,7 +53,7 @@ func ScheduleEmail(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, 
 					FromName: "Sentinel",
 					ToEmail:  recipient,
 					Subject:  "Sentinel Report",
-					Message:  fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes.", event.Title, event.Start),
+					Message:  fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes.", event.Title, event.When.Format("3:04 PM")),
 				}
 				if err := m.Send(cfg); err != nil {
 					logger.Error(err.Error(), "SERVICE", "NOTIFY")
