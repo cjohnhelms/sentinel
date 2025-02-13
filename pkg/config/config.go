@@ -16,8 +16,6 @@ type Config struct {
 	Version    string
 	ScrapeHour int
 	ScrapeMin  int
-	EmailHour  int
-	EmailMin   int
 }
 
 func newErr(env string) error {
@@ -29,8 +27,6 @@ func New() (*Config, error) {
 
 	var sh int
 	var sm int
-	var eh int
-	var em int
 
 	sender, ok := os.LookupEnv("SENDER")
 	if !ok {
@@ -77,14 +73,6 @@ func New() (*Config, error) {
 	if err != nil {
 		sm = 0
 	}
-	eh, err = strconv.Atoi(os.Getenv("EMAIL_HOUR"))
-	if err != nil {
-		eh = 3
-	}
-	em, err = strconv.Atoi(os.Getenv("EMAIL_MIN"))
-	if err != nil {
-		em = 0
-	}
 	return &Config{
 		Sender:     sender,
 		Password:   password,
@@ -93,7 +81,5 @@ func New() (*Config, error) {
 		Version:    version,
 		ScrapeHour: sh,
 		ScrapeMin:  sm,
-		EmailHour:  eh,
-		EmailMin:   em,
 	}, nil
 }
