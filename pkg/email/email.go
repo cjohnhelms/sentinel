@@ -16,52 +16,50 @@ func ScheduleEmail(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, 
 	logger := cfg.Logger
 
 	logger.Info("Email queued")
-	for {
-		emailTime := event.When.Add(-4 * time.Hour)
+	emailTime := event.When.Add(-4 * time.Hour)
 
-		if emailTime.Before(time.Now()) {
-			logger.Error("Email scheduled after the desired email time, sending ASAP")
-			for _, recipient := range cfg.Emails {
-				m := &structs.Email{
-					FromName: "Sentinel",
-					ToEmail:  recipient,
-					Subject:  "Sentinel Report",
-					Message:  fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes.", event.Title, event.When.Format("3:04 PM")),
-				}
-				if err := m.Send(cfg); err != nil {
-					logger.Error(err.Error(), "SERVICE", "NOTIFY")
-				} else {
-					logger.Info(fmt.Sprintf("Successful email: %s", recipient))
-				}
+	if emailTime.Before(time.Now()) {
+		logger.Error("Email scheduled after the desired email time, sending ASAP")
+		for _, recipient := range cfg.Emails {
+			m := &structs.Email{
+				FromName: "Sentinel",
+				ToEmail:  recipient,
+				Subject:  "Sentinel Report",
+				Message:  fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes.", event.Title, event.When.Format("3:04 PM")),
 			}
-			logger.Info("Email process complete, killing routine")
-			return
-		}
-
-		wait := time.Until(emailTime)
-		logger.Debug(fmt.Sprintf("Sending email in %v", wait))
-		timer := time.NewTimer(wait)
-
-		select {
-		case <-ctx.Done():
-			logger.Info("Email routine recieved signal, killing")
-			return
-		case <-timer.C:
-			for _, recipient := range cfg.Emails {
-				m := &structs.Email{
-					FromName: "Sentinel",
-					ToEmail:  recipient,
-					Subject:  "Sentinel Report",
-					Message:  fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes.", event.Title, event.When.Format("3:04 PM")),
-				}
-				if err := m.Send(cfg); err != nil {
-					logger.Error(err.Error(), "SERVICE", "NOTIFY")
-				} else {
-					logger.Info(fmt.Sprintf("Successful email: %s", recipient))
-				}
+			if err := m.Send(cfg); err != nil {
+				logger.Error(err.Error(), "SERVICE", "NOTIFY")
+			} else {
+				logger.Info(fmt.Sprintf("Successful email: %s", recipient))
 			}
-			logger.Info("Email process complete, killing routine")
-			return
 		}
+		logger.Info("Email process complete, killing routine")
+		return
+	}
+
+	wait := time.Until(emailTime)
+	logger.Debug(fmt.Sprintf("Sending email in %v", wait))
+	timer := time.NewTimer(wait)
+
+	select {
+	case <-ctx.Done():
+		logger.Info("Email routine recieved signal, killing")
+		return
+	case <-timer.C:
+		for _, recipient := range cfg.Emails {
+			m := &structs.Email{
+				FromName: "Sentinel",
+				ToEmail:  recipient,
+				Subject:  "Sentinel Report",
+				Message:  fmt.Sprintf("AAC Event: %s - %s\n\nConsider alternate routes.", event.Title, event.When.Format("3:04 PM")),
+			}
+			if err := m.Send(cfg); err != nil {
+				logger.Error(err.Error(), "SERVICE", "NOTIFY")
+			} else {
+				logger.Info(fmt.Sprintf("Successful email: %s", recipient))
+			}
+		}
+		logger.Info("Email process complete, killing routine")
+		return
 	}
 }
