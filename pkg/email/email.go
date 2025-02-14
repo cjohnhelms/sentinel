@@ -17,8 +17,7 @@ func ScheduleEmail(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, 
 
 	logger.Info("Email queued")
 	for {
-		duration := 4 * time.Hour
-		emailTime := event.When.Add(-duration)
+		emailTime := event.When.Add(-4 * time.Hour)
 
 		if emailTime.Before(time.Now()) {
 			logger.Error("Email scheduled after the desired email time, sending ASAP")
@@ -41,7 +40,7 @@ func ScheduleEmail(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, 
 
 		wait := time.Until(emailTime)
 		logger.Debug(fmt.Sprintf("Sending email in %v", wait))
-		timer := time.NewTimer(duration)
+		timer := time.NewTimer(wait)
 
 		select {
 		case <-ctx.Done():
