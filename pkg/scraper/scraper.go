@@ -54,7 +54,7 @@ func scrape(logger *slog.Logger) structs.Event {
 
 		when, err := time.Parse("Jan 2, 2006 3:04pm", dayTime)
 		if err != nil {
-			logger.Info("Trying other parse layout")
+			logger.Debug("Trying other parse layout")
 			when, err = time.Parse("Jan 2, 2006 3pm", dayTime)
 			if err != nil {
 				logger.Error(fmt.Sprintf("both time layouts failed: %s", title))
