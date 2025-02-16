@@ -16,7 +16,11 @@ func ScheduleEmail(ctx context.Context, cfg *config.Config, wg *sync.WaitGroup, 
 	logger := cfg.Logger
 
 	logger.Info("Email queued")
-	emailTime := event.When.Add(-4 * time.Hour)
+	loc, _ := time.LoadLocation("America/Chicago")
+	event.When = event.When.In(loc)
+	emailTime := event.When.Add(-(4 * time.Hour))
+	logger.Info(fmt.Sprintf("Event time: %s", event.When))
+	logger.Info(fmt.Sprintf("Email time: %s", emailTime))
 
 	if emailTime.Before(time.Now()) {
 		logger.Error("Email scheduled after the desired email time, sending ASAP")
