@@ -3,16 +3,23 @@ package scraper
 import (
 	"testing"
 	"time"
-
-	"github.com/cjohnhelms/sentinel/pkg/structs"
 )
 
-func TestDateVerification(t *testing.T) {
-	event1 := structs.Event{
-		When: time.Now(),
+func TestScrapeEvents(t *testing.T) {
+	_, err := ScrapeEvents()
+	if err != nil {
+		t.Fatalf("failed to scrape events, possible changes to aac website: %s", err)
 	}
+}
 
-	if !isToday(event1.When) {
-		t.Fatalf("Failed to properly parse event on the current day")
+func TestDateVerification(t *testing.T) {
+	today := time.Now()
+	tomorrow := today.AddDate(0, 0, 1)
+
+	if !isToday(today) {
+		t.Fatalf("Failed to properly parse time, did not identify today")
+	}
+	if isToday(tomorrow) {
+		t.Fatalf("Failed to properly parse time, identified tomorrow as today ")
 	}
 }

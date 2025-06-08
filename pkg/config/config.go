@@ -2,84 +2,55 @@ package config
 
 import (
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
-	"strconv"
-	"strings"
+
+	"github.com/pelletier/go-toml"
 )
 
 type Config struct {
-	Sender     string
-	Password   string
-	Emails     []string
-	Logger     *slog.Logger
-	Version    string
-	ScrapeHour int
-	ScrapeMin  int
+	Log           string
+	Version       string
+	Notifications struct {
+		Email []*Email
+		SMS   []*SMS
+	}
 }
 
-func newErr(env string) error {
-	return fmt.Errorf("env variable %s is unset", env)
+func New(path string) (*Config, error) {
+	file, err := os.Open(path)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	var config Config
+	b, err := io.ReadAll(file)
+	if err != nil {
+		panic(err)
+	}
+
+	err = toml.Unmarshal(b, &config)
+	if err != nil {
+		panic(err)
+	}
+
+	fmt.Println(config)
+	return &config, nil
 }
 
-func New() (*Config, error) {
+func InitLogger(l string) {
 	var level slog.Level
-
-	var sh int
-	var sm int
-
-	sender, ok := os.LookupEnv("SENDER")
-	if !ok {
-		return nil, newErr("SENDER")
-	}
-	password, ok := os.LookupEnv("PASSWORD")
-	if !ok {
-		return nil, newErr("PASSWORD")
-	}
-	emails, ok := os.LookupEnv("NOTIFY")
-	if !ok {
-		return nil, newErr("NOTIFY")
-	}
-	loglvl, ok := os.LookupEnv("LOG_LEVEL")
-	if !ok {
-		return nil, newErr("LOG_LEVEL")
-	}
-	version, ok := os.LookupEnv("VERSION")
-	if !ok {
-		return nil, newErr("VERSION")
-	}
-
-	switch loglvl {
-	case "DEBUG":
+	switch l {
+	case "debug":
 		level = slog.LevelDebug
-	case "INFO":
-		level = slog.LevelInfo
+	case "warn":
+		level = slog.LevelWarn
 	default:
 		level = slog.LevelInfo
-
 	}
-	handlerOpts := &slog.HandlerOptions{
-		Level: level,
-	}
-	jsonHandler := slog.NewJSONHandler(os.Stdout, handlerOpts)
-	logger := slog.New(jsonHandler)
-
-	// get times or set defaults
-	sh, err := strconv.Atoi(os.Getenv("SCRAPE_HOUR"))
-	if err != nil {
-		sh = 2
-	}
-	sm, err = strconv.Atoi(os.Getenv("SCRAPE_MIN"))
-	if err != nil {
-		sm = 0
-	}
-	return &Config{
-		Sender:     sender,
-		Password:   password,
-		Emails:     strings.Split(emails, ","),
-		Logger:     logger,
-		Version:    version,
-		ScrapeHour: sh,
-		ScrapeMin:  sm,
-	}, nil
+	h := slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: level})
+	logger := slog.New(h)
+	slog.SetDefault(logger)
 }
