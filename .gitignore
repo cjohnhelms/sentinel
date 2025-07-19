@@ -22,4 +22,27 @@ go.work
 go.work.sum
 
 # env file
-.env
+*.toml
+
+# artifacts
+src/bootstrap
+*.zip
+
+# Local .terraform directories
+**/.terraform/*
+.terraform.lock.hcl
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+
+# Overrides
+*.tfoverride
+
+# Ignore terraform locks
+.terraform.lock.hcl
+
+
