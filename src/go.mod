@@ -5,7 +5,8 @@ go 1.23.0
 require (
 	github.com/aws/aws-lambda-go v1.49.0
 	github.com/gocolly/colly v1.2.0
-	github.com/pelletier/go-toml v1.9.5
+	github.com/google/uuid v1.6.0
+	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
 )
 
 require (
