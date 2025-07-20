@@ -4,6 +4,10 @@ on:
     branches:
       - main
 
+defaults:
+  run:
+    working-directory: ./deploy/terraform
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -41,7 +45,8 @@ jobs:
           EMAIL_SERVER_PASSWORD: ${{ secrets.EMAIL_SERVER_PASSWORD }}
           SERVICE_EMAIL: ${{ secrets.SERVICE_EMAIL }}
           EMAIL_SERVER: ${{ secrets.EMAIL_SERVER }}
-        run: terraform plan -no-color -out=.planfile
+        run: |
+          terraform plan -no-color -out=.planfile
 
       - name: Post PR comment
         uses: borchero/terraform-plan-comment@v2.4.1

@@ -5,6 +5,10 @@ on:
     branches:
       - "main"
 
+defaults:
+  run:
+    working-directory: ./deploy/terraform
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -18,12 +22,12 @@ jobs:
 
       - name: Build
         run: |
-          cd src
+          cd ../../src
           GOOS=linux GOARCH=amd64 go build -tags lambda.norpc -o bootstrap ./cmd/lambda/main.go
 
       - name: Create Zip
         run: |
-          cd src
+          cd ../../src
           zip ./deploy/terraform/lambda.zip bootstrap
 
       - name: Configure AWS credentials
