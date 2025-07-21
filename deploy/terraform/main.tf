@@ -13,13 +13,13 @@ terraform {
 }
 
 provider "aws" {
-  region = "us-east-1"
+  region  = "us-east-1"
   profile = "terraform"
   default_tags {
     tags = {
-      Project = "sentinel"
+      Project     = "sentinel"
       Environment = "production"
-      Region = "us-east-1"
+      Region      = "us-east-1"
     }
   }
 }
@@ -44,28 +44,28 @@ resource "aws_s3_bucket_versioning" "backend" {
 // lambda assume policy
 data "aws_iam_policy_document" "lambda_assume" {
   statement {
-    actions   = ["sts:AssumeRole"]
-    effect = "Allow"
+    actions = ["sts:AssumeRole"]
+    effect  = "Allow"
     principals {
       identifiers = ["lambda.amazonaws.com"]
-      type = "Service"
+      type        = "Service"
     }
   }
 }
 
 resource "aws_iam_role" "lambda" {
-  name = "sentinel-prod-iam-role-lambda-use1"
+  name               = "sentinel-prod-iam-role-lambda-use1"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
 }
 
 // eventbridge assume policy
 data "aws_iam_policy_document" "eventbridge_assume" {
   statement {
-    actions   = ["sts:AssumeRole"]
-    effect = "Allow"
+    actions = ["sts:AssumeRole"]
+    effect  = "Allow"
     principals {
       identifiers = ["scheduler.amazonaws.com"]
-      type = "Service"
+      type        = "Service"
     }
   }
 }
@@ -73,24 +73,24 @@ data "aws_iam_policy_document" "eventbridge_assume" {
 // invoke permissions
 data "aws_iam_policy_document" "eventbridge" {
   statement {
-    actions = ["lambda:InvokeFunction"]
-    effect = "Allow"
+    actions   = ["lambda:InvokeFunction"]
+    effect    = "Allow"
     resources = [aws_lambda_function.lambda.arn]
   }
 }
 
 resource "aws_iam_policy" "eventbridge" {
-  name = "sentinel-prod-iam-policy-eventbridge-use1"
+  name   = "sentinel-prod-iam-policy-eventbridge-use1"
   policy = data.aws_iam_policy_document.eventbridge.json
 }
 
 resource "aws_iam_role_policy_attachment" "eventbridge" {
-  role = aws_iam_role.eventbridge.name
+  role       = aws_iam_role.eventbridge.name
   policy_arn = aws_iam_policy.eventbridge.arn
 }
 
 resource "aws_iam_role" "eventbridge" {
-  name = "sentinel-prod-iam-role-eventbridge-use1"
+  name               = "sentinel-prod-iam-role-eventbridge-use1"
   assume_role_policy = data.aws_iam_policy_document.eventbridge_assume.json
 }
 
@@ -113,10 +113,10 @@ resource "aws_scheduler_schedule_group" "schedule_group" {
 }
 
 resource "aws_scheduler_schedule" "schedule" {
-  name = "sentinel-prod-eventbridge-schedule-use1"
+  name       = "sentinel-prod-eventbridge-schedule-use1"
   group_name = "sentinel-prod-eventbridge-group-use1"
 
-  schedule_expression = "cron(0 9 * * ? *)"
+  schedule_expression          = "cron(0 9 * * ? *)"
   schedule_expression_timezone = "America/Chicago"
 
   flexible_time_window {

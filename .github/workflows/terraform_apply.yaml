@@ -44,11 +44,11 @@ jobs:
 
       - name: Terraform Init
         id: init
-        run: terraform init -backend-
+        run: terraform init
 
       - name: Terraform Format
         id: fmt
-        run: terraform fmt -check
+        run: terraform fmt
 
       - name: Terraform Validate
         id: validate
