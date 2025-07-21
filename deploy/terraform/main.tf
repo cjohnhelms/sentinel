@@ -104,7 +104,7 @@ resource "aws_lambda_function" "lambda" {
   memory_size   = 128
   timeout       = 3
 
-  source_code_hash = filebase64sha256("lambda_${var.lambdaVersion}.zip")
+  source_code_hash = filebase64sha256("lambda_${var.githubSHA}.zip")
 }
 
 // eventbridge
