@@ -27,8 +27,7 @@ jobs:
 
       - name: Create Zip
         run: |
-          cd ../../src
-          zip ./deploy/terraform/lambda_$GITHUB_SHA.zip bootstrap
+          zip lambda_$GITHUB_SHA.zip ../../src/bootstrap 
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -61,7 +60,7 @@ jobs:
           EMAIL_SERVER_PASSWORD: ${{ secrets.EMAIL_SERVER_PASSWORD }}
           SERVICE_EMAIL: ${{ secrets.SERVICE_EMAIL }}
           EMAIL_SERVER: ${{ secrets.EMAIL_SERVER }}
-        run: terraform apply --auto-approve -var "githubSHA=${{ github.GITHUB_SHA }}"
+        run: terraform apply --auto-approve -var "githubSHA=$GITHUB_SHA"
 
 
 
