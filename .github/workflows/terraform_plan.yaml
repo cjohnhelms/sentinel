@@ -11,6 +11,8 @@ defaults:
 jobs:
   build:
     runs-on: ubuntu-latest
+    outputs:
+      plan: ${{ steps.plan.outputs.test }}
     steps:
       - uses: actions/checkout@v4
 
@@ -55,10 +57,10 @@ jobs:
           SERVICE_EMAIL: ${{ secrets.SERVICE_EMAIL }}
           EMAIL_SERVER: ${{ secrets.EMAIL_SERVER }}
         run: |
-          terraform plan -no-color -out=.planfile -var "githubSHA=$GITHUB_SHA"
+          terraform plan -no-color -var "githubSHA=$GITHUB_SHA"
 
-      - name: Post PR comment
-        uses: borchero/terraform-plan-comment@v2.4.1
+      - name: Comment PR
+        uses: thollander/actions-comment-pull-request@v3 # Use the appropriate version
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          planfile: .planfile
+          message: ${{ steps.plan.outputs.stdout }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
