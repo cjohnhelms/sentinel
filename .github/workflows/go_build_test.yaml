@@ -35,4 +35,6 @@ jobs:
         go test -v ./...
 
     - name: Test variable
-      run: echo ${{ github.GITHUB_REF }}
+      env:
+        TEST_ENV: ${{ github.GITHUB_REF }}
+      run: echo $TEST_ENV
