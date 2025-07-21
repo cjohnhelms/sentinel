@@ -33,6 +33,3 @@ jobs:
       run: |
         cd src
         go test -v ./...
-
-    - name: Test variable
-      run: echo "$GITHUB_CONTEXT"

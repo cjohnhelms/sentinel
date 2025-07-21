@@ -1,4 +1,4 @@
-variable "lambdaVersion" {
+variable "githubSHA" {
   type        = string
-  description = "version"
+  description = "githubSHA"
 }
