@@ -61,7 +61,7 @@ jobs:
           EMAIL_SERVER_PASSWORD: ${{ secrets.EMAIL_SERVER_PASSWORD }}
           SERVICE_EMAIL: ${{ secrets.SERVICE_EMAIL }}
           EMAIL_SERVER: ${{ secrets.EMAIL_SERVER }}
-        run: terraform apply --auto-approve
+        run: terraform apply --auto-approve -var "githubSHA=${{ github.GITHUB_SHA }}"
 
 
 

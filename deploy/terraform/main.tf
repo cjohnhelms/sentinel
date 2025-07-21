@@ -96,7 +96,7 @@ resource "aws_iam_role" "eventbridge" {
 
 // lambda
 resource "aws_lambda_function" "lambda" {
-  filename      = "./lambda_${var.lambdaVersion}.zip"
+  filename      = "./lambda_${var.githubSHA}.zip"
   function_name = "sentinel-prod-lambda-function-use1"
   role          = aws_iam_role.lambda.arn
   handler       = "bootstrap"
