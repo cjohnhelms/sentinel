@@ -60,5 +60,5 @@ jobs:
       - name: Comment PR
         uses: thollander/actions-comment-pull-request@v3 # Use the appropriate version
         with:
-          file-path: ./tfplan
+          file-path: tfplan
           github-token: ${{ secrets.GITHUB_TOKEN }}
