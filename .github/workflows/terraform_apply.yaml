@@ -28,7 +28,7 @@ jobs:
       - name: Create Zip
         run: |
           cd ../../src
-          zip ./deploy/terraform/lambda.zip bootstrap
+          zip ./deploy/terraform/lambda_$GITHUB_SHA.zip bootstrap
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
