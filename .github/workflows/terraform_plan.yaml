@@ -55,10 +55,10 @@ jobs:
           SERVICE_EMAIL: ${{ secrets.SERVICE_EMAIL }}
           EMAIL_SERVER: ${{ secrets.EMAIL_SERVER }}
         run: |
-          terraform plan -no-color -out=.tfplan -var "githubSHA=$GITHUB_SHA"
+          terraform plan -no-color -out=tfplan -var "githubSHA=$GITHUB_SHA"
 
       - name: Comment PR
         uses: thollander/actions-comment-pull-request@v3 # Use the appropriate version
         with:
-          file-path: ./.tfplan
+          file-path: ./tfplan
           github-token: ${{ secrets.GITHUB_TOKEN }}
