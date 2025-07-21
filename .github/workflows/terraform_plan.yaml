@@ -46,7 +46,7 @@ jobs:
           SERVICE_EMAIL: ${{ secrets.SERVICE_EMAIL }}
           EMAIL_SERVER: ${{ secrets.EMAIL_SERVER }}
         run: |
-          terraform plan -no-color -out=.planfile -var "githubSHA=${{ github.GITHUB_SHA }}"
+          terraform plan -no-color -out=.planfile -var "githubSHA=$GITHUB_SHA"
 
       - name: Post PR comment
         uses: borchero/terraform-plan-comment@v2.4.1
