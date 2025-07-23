@@ -26,7 +26,7 @@ jobs:
 
     - name: Test
       env:
-        EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS}}
+        EMAIL_RECIPIENTS: ${{ secrets.TEST_EMAIL_RECIPIENTS}}
         EMAIL_SERVER_PASSWORD: ${{ secrets.EMAIL_SERVER_PASSWORD }}
         SERVICE_EMAIL: ${{ secrets.SERVICE_EMAIL }}
         EMAIL_SERVER: ${{ secrets.EMAIL_SERVER }}
