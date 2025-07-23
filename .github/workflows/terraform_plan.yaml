@@ -55,11 +55,11 @@ jobs:
           SERVICE_EMAIL: ${{ secrets.SERVICE_EMAIL }}
           EMAIL_SERVER: ${{ secrets.EMAIL_SERVER }}
         run: |
-          terraform plan -no-color -out tfplan -var "githubSHA=$GITHUB_SHA"
+          terraform plan -no-color -out ${{ github.workspace }}/plan_output.txt -var "githubSHA=$GITHUB_SHA"
 
       - name: Comment Terraform Plan on PR
         uses: blinqas/tf-plan-pr-comment@v1
         with:
-          output_file: tfplan
+          output_file: ${{ github.workspace }}/plan_output.txt
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
