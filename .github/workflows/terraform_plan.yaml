@@ -57,10 +57,25 @@ jobs:
         run: |
           terraform plan -no-color -out tfplan -var "githubSHA=$GITHUB_SHA"
 
-      - name: Post Terraform Plan to PR
+      - name: Post Terraform Plan to PR with curl
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
-          PLAN_OUTPUT=$(cat tfplan | head -c 65000)
-          echo -e "### Terraform Plan Output\n\`\`\`\n$PLAN_OUTPUT\n\`\`\`" > plan-comment.md
-          gh pr comment ${{ github.event.pull_request.number }} --body-file plan-comment.md
+          # Read plan output and truncate to 65k characters
+          PLAN_OUTPUT=$(head -c 65000 tfplan)
+
+          # Wrap in code block and escape double quotes
+          COMMENT_BODY=$(jq -Rs . <<< "### Terraform Plan Output
+  
+          \`\`\`hcl
+          $PLAN_OUTPUT
+          \`\`\`
+          ")
+
+          curl -s -H "Authorization: token $GITHUB_TOKEN" \
+            -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"body\": $COMMENT_BODY}" \
+            "https://api.github.com/repos/$REPO/issues/$PR_NUMBER/comments" 
