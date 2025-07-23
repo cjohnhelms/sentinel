@@ -55,15 +55,11 @@ jobs:
           SERVICE_EMAIL: ${{ secrets.SERVICE_EMAIL }}
           EMAIL_SERVER: ${{ secrets.EMAIL_SERVER }}
         run: |
-          terraform plan -no-color -var "githubSHA=$GITHUB_SHA"
+          terraform plan -no-color -out tfplan -var "githubSHA=$GITHUB_SHA"
 
-      - name: Comment on PR (only if not already posted)
+      - name: Comment Terraform Plan on PR
+        uses: blinqas/tf-plan-pr-comment@v1
+        with:
+          output_file: tfplan
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-            gh pr comment ${{ github.event.pull_request.number }} \
-              --body "### [AUTO-COMMENT] Terraform Plan
-            \`\`\`hcl
-             ${{ steps.plan.outputs.stdout }}
-            \`\`\`
-            " 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
