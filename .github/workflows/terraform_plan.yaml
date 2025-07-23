@@ -64,5 +64,5 @@ jobs:
             ```
             ${{ steps.plan.outputs.stdout }}
             ```
-          GITHUB_TOKEN: ${{ github.token }}:w
+          GITHUB_TOKEN: ${{ github.token }}
 
