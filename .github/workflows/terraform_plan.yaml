@@ -55,27 +55,14 @@ jobs:
           SERVICE_EMAIL: ${{ secrets.SERVICE_EMAIL }}
           EMAIL_SERVER: ${{ secrets.EMAIL_SERVER }}
         run: |
-          terraform plan -no-color -out tfplan -var "githubSHA=$GITHUB_SHA"
+          terraform plan -no-color -var "githubSHA=$GITHUB_SHA"
 
-      - name: Post Terraform Plan to PR with curl
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          REPO: ${{ github.repository }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-        run: |
-          # Read plan output and truncate to 65k characters
-          PLAN_OUTPUT=$(head -c 65000 tfplan)
+      - name: Create code block comment
+        uses: thollander/actions-comment-pull-request@v1
+        with:
+          message: |
+            ```
+            ${{ steps.plan.outputs.stdout }}
+            ```
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}:w
 
-          # Wrap in code block and escape double quotes
-          COMMENT_BODY=$(jq -Rs . <<< "### Terraform Plan Output
-  
-          \`\`\`hcl
-          $PLAN_OUTPUT
-          \`\`\`
-          ")
-
-          curl -s -H "Authorization: token $GITHUB_TOKEN" \
-            -H "Content-Type: application/json" \
-            -X POST \
-            -d "{\"body\": $COMMENT_BODY}" \
-            "https://api.github.com/repos/$REPO/issues/$PR_NUMBER/comments" 
