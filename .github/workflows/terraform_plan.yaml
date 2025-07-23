@@ -64,6 +64,6 @@ jobs:
             gh pr comment ${{ github.event.pull_request.number }} \
               --body "### [AUTO-COMMENT] Terraform Plan
             \`\`\`hcl
-             ${{ steps.plan.outputs.plan }}
+             ${{ steps.plan.outputs.stdout }}
             \`\`\`
             " 
