@@ -57,8 +57,11 @@ jobs:
         run: |
           terraform plan -no-color -out tfplan -var "githubSHA=$GITHUB_SHA"
 
-      - name: Post PR comment
-        uses: borchero/terraform-plan-comment@v2
-        with:
-          token: ${{ github.token }}
-          planfile: tfplan
+      - name: Post Terraform Plan to PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PLAN_OUTPUT=$(cat tfplan | head -c 65000)
+          SAFE_PLAN=$(printf "%s\n" "$PLAN_OUTPUT" | sed 's/`/\'"'"'`/g')
+          echo -e "### Terraform Plan Output\n\`\`\`\n$SAFE_PLAN\n\`\`\`" > plan-comment.md
+          gh pr comment ${{ github.event.pull_request.number }} --body-file plan-comment.md
