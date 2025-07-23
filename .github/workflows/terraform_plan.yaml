@@ -9,7 +9,7 @@ defaults:
     working-directory: ./deploy/terraform
 
 jobs:
-  setup:
+  terraform-plan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -26,9 +26,6 @@ jobs:
         with:
           terraform_version: '1.12.2'
 
-  build:
-    runs-on: ubuntu-latest
-    steps:
       - name: Build
         run: |
           cd ../../src
@@ -38,9 +35,6 @@ jobs:
         run: |
           zip lambda_$GITHUB_SHA.zip ../../src/bootstrap
 
-  terraform:
-    runs-on: ubuntu-latest
-    steps:
       - name: Terraform Init
         id: init
         run: terraform init
@@ -70,6 +64,6 @@ jobs:
             gh pr comment ${{ github.event.pull_request.number }} \
               --body "### [AUTO-COMMENT] Terraform Plan
             \`\`\`hcl
-             ${{ steps.plan.outputs.stdout }}
+            ${{ steps.plan.outputs.stdout }}
             \`\`\`
             " 
