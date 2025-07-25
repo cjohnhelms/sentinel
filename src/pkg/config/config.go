@@ -1,10 +1,16 @@
 package config
 
 import (
-	"errors"
+	"context"
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"os"
 	"strings"
+
+	"github.com/aws/aws-sdk-go-v2/aws"
+	awsconfig "github.com/aws/aws-sdk-go-v2/config"
+	"github.com/aws/aws-sdk-go-v2/service/secretsmanager"
 )
 
 type Config struct {
@@ -15,30 +21,45 @@ type Config struct {
 	EmailServerPassword string
 }
 
+type secrets struct {
+	EmailRecipients     string `json:"email_recipients"`
+	ServiceEmail        string `json:"service_email"`
+	EmailServer         string `json:"email_server"`
+	EmailServerPassword string `json:"email_server_password"`
+}
+
 func NewConfig() (*Config, error) {
-	log := os.Getenv("LOG_LEVEL")
-	emails, ok := os.LookupEnv("EMAIL_RECIPIENTS")
-	if !ok {
-		return nil, errors.New("EMAIL_RECIPIENTS environment variable not set")
+	secretName := "sentinel-prod-secrets-use1"
+	region := "us-east-1"
+
+	config, err := awsconfig.LoadDefaultConfig(context.TODO(), awsconfig.WithRegion(region))
+	if err != nil {
+		return nil, err
 	}
-	server, ok := os.LookupEnv("EMAIL_SERVER")
-	if !ok {
-		return nil, errors.New("EMAIL_SERVER environment variable not set")
+	scm := secretsmanager.NewFromConfig(config)
+	input := &secretsmanager.GetSecretValueInput{
+		SecretId:     aws.String(secretName),
+		VersionStage: aws.String("AWSCURRENT"),
 	}
-	password, ok := os.LookupEnv("EMAIL_SERVER_PASSWORD")
-	if !ok {
-		return nil, errors.New("EMAIL_SERVER_PASSWORD environment variable not set")
+
+	result, err := scm.GetSecretValue(context.TODO(), input)
+	if err != nil {
+		return nil, err
 	}
-	semail, ok := os.LookupEnv("SERVICE_EMAIL")
-	if !ok {
-		return nil, errors.New("SERVICE_EMAIL environment variable not set")
+
+	var secretString string = *result.SecretString
+	var secretConfig secrets
+	if err = json.Unmarshal([]byte(secretString), &secretConfig); err != nil {
+		return nil, err
 	}
+	slog.Debug(fmt.Sprintf("secrets: %+v", secretConfig))
+
 	return &Config{
-		Log:                 log,
-		RecipientEmails:     strings.Split(emails, ","),
-		ServiceEmail:        semail,
-		EmailServerPassword: password,
-		EmailServer:         server,
+		Log:                 os.Getenv("LOG_LEVEL"),
+		RecipientEmails:     strings.Split(secretConfig.EmailRecipients, ","),
+		ServiceEmail:        secretConfig.ServiceEmail,
+		EmailServerPassword: secretConfig.EmailServerPassword,
+		EmailServer:         secretConfig.EmailServer,
 	}, nil
 }
 

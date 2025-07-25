@@ -29,11 +29,11 @@ jobs:
       - name: Build
         run: |
           cd ../../src
-          GOOS=linux GOARCH=amd64 go build -tags lambda.norpc -o bootstrap ./cmd/lambda/main.go
+          GOOS=linux GOARCH=amd64 go build -tags lambda.norpc -o ../deploy/terraform/bootstrap ./cmd/lambda/main.go
 
       - name: Create Zip
         run: |
-          zip lambda_$GITHUB_SHA.zip ../../src/bootstrap
+          zip lambda_$GITHUB_SHA.zip bootstrap
 
       - name: Terraform Init
         id: init
@@ -49,13 +49,12 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        env:
-          EMAIL_RECIPIENTS: ${{ secrets.EMAIL_RECIPIENTS}}
-          EMAIL_SERVER_PASSWORD: ${{ secrets.EMAIL_SERVER_PASSWORD }}
-          SERVICE_EMAIL: ${{ secrets.SERVICE_EMAIL }}
-          EMAIL_SERVER: ${{ secrets.EMAIL_SERVER }}
         run: |
-          terraform plan -no-color -var "githubSHA=$GITHUB_SHA"
+          terraform plan -no-color -var "githubSHA=$GITHUB_SHA" \
+          -var "email_recipients=${{ secrets.EMAIL_RECIPIENTS }}" \
+          -var "email_server_password=${{ secrets.EMAIL_SERVER_PASSWORD }}" \
+          -var "service_email=${{ secrets.SERVICE_EMAIL }}" \
+          -var "email_server=${{ secrets.EMAIL_SERVER }}"
 
       - name: Create code block comment
         uses: thollander/actions-comment-pull-request@v1
