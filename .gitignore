@@ -47,3 +47,5 @@ crash.log
 
 # Ignore plans
 tfplan
+
+.env
