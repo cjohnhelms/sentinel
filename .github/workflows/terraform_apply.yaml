@@ -53,10 +53,10 @@ jobs:
         id: validate
         run: terraform validate
 
-      - name: Terraform Plan
+      - name: Terraform Apply
         id: plan
         run: |
-          terraform plan -no-color -var "githubSHA=$GITHUB_SHA" \
+          terraform apply -auto-approve -var "githubSHA=$GITHUB_SHA" \
           -var "email_recipients=${{ secrets.EMAIL_RECIPIENTS }}" \
           -var "email_server_password=${{ secrets.EMAIL_SERVER_PASSWORD }}" \
           -var "service_email=${{ secrets.SERVICE_EMAIL }}" \
