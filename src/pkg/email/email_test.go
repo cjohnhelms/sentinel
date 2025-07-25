@@ -30,12 +30,13 @@ func initialize() (map[string]string, error) {
 		"email_recipients":      rc,
 		"email_server":          es,
 		"email_server_password": esp,
-		"email_service":         se,
+		"service_email":         se,
 	}, nil
 }
 
 func TestEmail_Send(t *testing.T) {
 	vars, err := initialize()
+
 	if err != nil {
 		t.Fatalf("failed to initialize: %s", err)
 	}
@@ -43,8 +44,8 @@ func TestEmail_Send(t *testing.T) {
 	e := &Emails{
 		Recipient: strings.Split(vars["email_recipients"], ","),
 		Server:    vars["email_server"],
-		Sender:    vars["email_server_password"],
-		Password:  vars["email_service"],
+		Sender:    vars["service_email"],
+		Password:  vars["email_server_password"],
 	}
 	events := []event.Event{
 		{
