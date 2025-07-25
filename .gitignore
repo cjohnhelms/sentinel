@@ -45,4 +45,7 @@ crash.log
 # Ignore terraform locks
 .terraform.lock.hcl
 
+# Ignore plans
+tfplan
 
+.env

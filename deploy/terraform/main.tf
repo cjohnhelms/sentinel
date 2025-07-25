@@ -52,6 +52,25 @@ data "aws_iam_policy_document" "lambda_assume" {
   }
 }
 
+// lambda secrets policy
+resource "aws_iam_role_policy" "lambda_secrets_policy" {
+  name = "lambda-secrets-access-policy"
+  role = aws_iam_role.lambda.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = [
+          "secretsmanager:GetSecretValue",
+        ]
+        Effect   = "Allow"
+        Resource = aws_secretsmanager_secret.secret.arn
+      },
+    ]
+  })
+}
+
 resource "aws_iam_role" "lambda" {
   name               = "sentinel-prod-iam-role-lambda-use1"
   assume_role_policy = data.aws_iam_policy_document.lambda_assume.json
@@ -102,8 +121,27 @@ resource "aws_lambda_function" "lambda" {
   runtime       = "provided.al2023"
   memory_size   = 128
   timeout       = 3
+  environment {
+
+  }
 
   source_code_hash = filebase64sha256("lambda_${var.githubSHA}.zip")
+}
+
+// secrets
+resource "aws_secretsmanager_secret" "secret" {
+  name        = "sentinel-prod-secrets-use1"
+  description = "Secrets used by Sentinel lambda function"
+}
+
+resource "aws_secretsmanager_secret_version" "secret_version" {
+  secret_id     = aws_secretsmanager_secret.secret.id
+  secret_string = jsonencode({
+    "email_recipients"    = var.email_recipients
+    "email_server_password" = var.email_server_password
+    "service_email" = var.service_email
+    "email_server" = var.email_server
+  })
 }
 
 // eventbridge
