@@ -29,11 +29,11 @@ jobs:
       - name: Build
         run: |
           cd ../../src
-          GOOS=linux GOARCH=amd64 go build -tags lambda.norpc -o bootstrap ./cmd/lambda/main.go
+          GOOS=linux GOARCH=amd64 go build -tags lambda.norpc -o ../deploy/terraform/bootstrap ./cmd/lambda/main.go
 
       - name: Create Zip
         run: |
-          zip lambda_$GITHUB_SHA.zip ../../src/bootstrap
+          zip lambda_$GITHUB_SHA.zip bootstrap
 
       - name: Terraform Init
         id: init
