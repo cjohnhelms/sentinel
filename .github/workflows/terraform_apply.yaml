@@ -1,4 +1,4 @@
-name: Build Lambda Package
+name: Terraform Apply
 
 on:
   push:
