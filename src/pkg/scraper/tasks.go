@@ -23,7 +23,12 @@ func NewScrapeTask() scheduler.Task {
 				slog.Error("cancel received, ending routine")
 				return
 			default:
-				todaysEvents, err := scrape(time.Now())
+				zone, err := time.LoadLocation("America/Chicago")
+				if err != nil {
+					slog.Warn("failed to load timezone, using local")
+					zone = time.Local
+				}
+				todaysEvents, err := scrape(time.Now().In(zone))
 				if err != nil {
 					slog.Error(err.Error())
 					return
