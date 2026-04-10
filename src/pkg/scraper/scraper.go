@@ -2,68 +2,75 @@ package scraper
 
 import (
 	"fmt"
-	"github.com/cjohnhelms/sentinel/pkg/event"
-	"github.com/gocolly/colly"
+	"io"
 	"log/slog"
+	"net/http"
 	"strings"
 	"time"
+
+	"github.com/PuerkitoBio/goquery"
+	"github.com/cjohnhelms/sentinel/pkg/event"
 )
 
-func scrape(target time.Time) ([]event.Event, error) {
-	var todaysEvents []event.Event
+// Scrape fetches the AAC events page and returns events matching target date.
+// Signature will gain a Fetcher parameter in Task 3; for now uses net/http directly.
+func Scrape(target time.Time) ([]event.Event, error) {
+	resp, err := http.Get("https://www.americanairlinescenter.com/events")
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrScrape, err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("%w: unexpected status %d", ErrScrape, resp.StatusCode)
+	}
+	return parseEvents(resp.Body, target)
+}
 
-	c := colly.NewCollector(colly.AllowedDomains("www.americanairlinescenter.com"))
-	c.OnResponse(func(r *colly.Response) {
-		slog.Info("visited site")
-	})
-	c.OnError(func(r *colly.Response, err error) {
-		slog.Info(fmt.Sprintf("failed to scrape page: %s", err))
-	})
-	c.SetRequestTimeout(5 * time.Second)
-	c.OnHTML("div.info.clearfix", func(e *colly.HTMLElement) {
-		// collect raw data of all events on the page
-		dt := e.ChildText("div.date")
-		title := e.ChildText("h3 a")
+func parseEvents(r io.Reader, target time.Time) ([]event.Event, error) {
+	doc, err := goquery.NewDocumentFromReader(r)
+	if err != nil {
+		return nil, fmt.Errorf("%w: %v", ErrParse, err)
+	}
 
-		parts := strings.Split(dt, "-")
+	layouts := []string{
+		"Jan 2, 2006 3:04PM",
+		"Jan 2, 2006 3PM",
+	}
+
+	var events []event.Event
+	doc.Find("div.info.clearfix").Each(func(_ int, s *goquery.Selection) {
+		dt := strings.TrimSpace(s.Find("div.date").Text())
+		title := strings.TrimSpace(s.Find("h3 a").Text())
+
+		parts := strings.SplitN(dt, "-", 2)
 		if len(parts) != 2 {
-			fmt.Println("Unexpected format")
+			slog.Warn("unexpected date format", "date", dt)
 			return
 		}
-		dateStr := strings.TrimSpace(parts[0])
-		timeStr := strings.TrimSpace(parts[1])
-		combined := fmt.Sprintf("%s %s", dateStr, timeStr)
-
-		layouts := [2]string{
-			"Jan 2, 2006 3:04PM", // for e.g. 6:30PM
-			"Jan 2, 2006 3PM",    // for e.g. 6PM
-		}
+		combined := strings.TrimSpace(parts[0]) + " " + strings.TrimSpace(parts[1])
 
 		var eventTime time.Time
-		var err error
+		var parseErr error
 		for _, layout := range layouts {
-			eventTime, err = time.Parse(layout, combined)
-			if err == nil {
+			eventTime, parseErr = time.Parse(layout, combined)
+			if parseErr == nil {
 				break
 			}
 		}
-		if err != nil {
-			slog.Warn("failed to parse date")
+		if parseErr != nil {
+			slog.Warn("failed to parse event date", "combined", combined)
+			return
 		}
 
-		if eventTime.Year() == target.Year() && eventTime.Month() == target.Month() && eventTime.Day() == target.Day() {
-			todaysEvents = append(todaysEvents, event.Event{
+		if eventTime.Year() == target.Year() &&
+			eventTime.Month() == target.Month() &&
+			eventTime.Day() == target.Day() {
+			events = append(events, event.Event{
 				Title: title,
 				When:  eventTime.Format("2006-01-02 3:04PM"),
 			})
 		}
 	})
 
-	// initiate page visit and collect raw data
-	err := c.Visit("https://www.americanairlinescenter.com/events")
-	if err != nil {
-		return nil, fmt.Errorf("failed to scrape: %s", err)
-	}
-
-	return todaysEvents, nil
+	return events, nil
 }
