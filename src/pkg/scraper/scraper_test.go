@@ -78,6 +78,16 @@ func TestScrape_fetchError(t *testing.T) {
 	}
 }
 
+func FuzzParseEvents(f *testing.F) {
+	f.Add(fixtureWithEvent)
+	f.Add(fixtureNoEvents)
+	f.Add(fixtureMalformedDate)
+
+	f.Fuzz(func(t *testing.T, html string) {
+		_, _ = parseEvents(strings.NewReader(html), target)
+	})
+}
+
 func TestParseEvents(t *testing.T) {
 	tests := []struct {
 		name string
