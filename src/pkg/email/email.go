@@ -37,7 +37,7 @@ func Send(s MailSender, cfg *config.Config, events []event.Event) error {
 		return err
 	}
 	addr := fmt.Sprintf("%s:587", cfg.EmailServer)
-	msg := []byte(fmt.Sprintf("From: Sentinel %s\nSubject: AAC Sentinel Notification\n\n%s",
+	msg := []byte(fmt.Sprintf("From: Sentinel <%s>\nSubject: AAC Sentinel Notification\n\n%s",
 		cfg.ServiceEmail, body))
 	if err := s.SendMail(addr, cfg.ServiceEmail, cfg.RecipientEmails, msg); err != nil {
 		return fmt.Errorf("%w: %v", ErrEmail, err)
