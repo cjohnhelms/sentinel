@@ -17,7 +17,7 @@ jobs:
     - name: Set up Go
       uses: actions/setup-go@v4
       with:
-        go-version: '>=1.23'
+        go-version: '>=1.25'
 
     - name: Build
       run: |
@@ -25,11 +25,6 @@ jobs:
         go build -v ./cmd/lambda/main.go
 
     - name: Test
-      env:
-        EMAIL_RECIPIENTS: ${{ secrets.TEST_EMAIL_RECIPIENTS }}
-        EMAIL_SERVER_PASSWORD: ${{ secrets.EMAIL_SERVER_PASSWORD }}
-        SERVICE_EMAIL: ${{ secrets.SERVICE_EMAIL }}
-        EMAIL_SERVER: ${{ secrets.EMAIL_SERVER }}
       run: |
         cd src
         go test -v ./...
