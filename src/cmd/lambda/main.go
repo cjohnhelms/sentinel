@@ -1,17 +1,14 @@
 package main
 
 import (
-	"context"
+	"fmt"
+	"log/slog"
+	"time"
+
 	"github.com/aws/aws-lambda-go/lambda"
 	"github.com/cjohnhelms/sentinel/pkg/config"
 	"github.com/cjohnhelms/sentinel/pkg/email"
-	"github.com/cjohnhelms/sentinel/pkg/event"
-	"github.com/cjohnhelms/sentinel/pkg/scheduler"
 	"github.com/cjohnhelms/sentinel/pkg/scraper"
-	"log/slog"
-	"os"
-	"os/signal"
-	"syscall"
 )
 
 func main() {
@@ -21,30 +18,24 @@ func main() {
 func handler() error {
 	cfg, err := config.NewConfig()
 	if err != nil {
-		return err
+		return fmt.Errorf("%w: %v", config.ErrConfig, err)
 	}
-	// logging setup
 	config.InitLogger(cfg.Log)
 
-	scrapeTask := scraper.NewScrapeTask()
-	emailTask := email.NewEmailTask()
+	zone, err := time.LoadLocation("America/Chicago")
+	if err != nil {
+		slog.Warn("failed to load timezone, using UTC")
+		zone = time.UTC
+	}
 
-	eventChan := make(chan []event.Event)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	events, err := scraper.Scrape(scraper.NewHTTPFetcher(), time.Now().In(zone))
+	if err != nil {
+		return err
+	}
+	if len(events) == 0 {
+		slog.Info("no events today")
+		return nil
+	}
 
-	sigs := make(chan os.Signal, 1)
-	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
-	go func(chan os.Signal) {
-		<-sigs
-		slog.Info("signal received, shutting down")
-		cancel()
-		return
-	}(sigs)
-
-	taskScheduler := scheduler.NewScheduler(ctx, eventChan, scrapeTask, emailTask)
-	taskScheduler.Run()
-
-	slog.Info("server exiting")
-	return nil
+	return email.Send(email.NewSMTPSender(cfg.EmailServerPassword), cfg, events)
 }
