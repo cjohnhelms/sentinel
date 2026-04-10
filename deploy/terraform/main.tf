@@ -120,7 +120,7 @@ resource "aws_lambda_function" "lambda" {
   handler       = "bootstrap"
   runtime       = "provided.al2023"
   memory_size   = 128
-  timeout       = 3
+  timeout       = 15
   environment {
 
   }
