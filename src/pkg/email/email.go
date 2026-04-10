@@ -49,3 +49,18 @@ func (e *Emails) generateBody(events []event.Event) (string, error) {
 	}
 	return message.String(), nil
 }
+
+// generateBody renders the email body for the given events.
+func generateBody(events []event.Event) (string, error) {
+	var message strings.Builder
+	tmpl, err := template.New("emailTemplate").Parse(
+		"AAC Events:\n\n {{range .}}{{.Title}} - {{.When}}\n{{ end}}\n\nConsider alternate routes.",
+	)
+	if err != nil {
+		return "", fmt.Errorf("%w: %v", ErrBodyGenerate, err)
+	}
+	if err := tmpl.Execute(&message, events); err != nil {
+		return "", fmt.Errorf("%w: %v", ErrBodyGenerate, err)
+	}
+	return message.String(), nil
+}
