@@ -28,7 +28,7 @@ func NewScrapeTask() scheduler.Task {
 					slog.Warn("failed to load timezone, using local")
 					zone = time.Local
 				}
-				todaysEvents, err := scrape(time.Now().In(zone))
+				todaysEvents, err := Scrape(NewHTTPFetcher(), time.Now().In(zone))
 				if err != nil {
 					slog.Error(err.Error())
 					return

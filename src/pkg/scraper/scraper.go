@@ -12,18 +12,42 @@ import (
 	"github.com/cjohnhelms/sentinel/pkg/event"
 )
 
-// Scrape fetches the AAC events page and returns events matching target date.
-// Signature will gain a Fetcher parameter in Task 3; for now uses net/http directly.
-func Scrape(target time.Time) ([]event.Event, error) {
-	resp, err := http.Get("https://www.americanairlinescenter.com/events")
+// Fetcher abstracts the HTTP layer so Scrape can be tested without network calls.
+type Fetcher interface {
+	Fetch(url string) (io.ReadCloser, error)
+}
+
+// HTTPFetcher is the production Fetcher backed by net/http.
+type HTTPFetcher struct {
+	client *http.Client
+}
+
+func NewHTTPFetcher() *HTTPFetcher {
+	return &HTTPFetcher{
+		client: &http.Client{Timeout: 10 * time.Second},
+	}
+}
+
+func (h *HTTPFetcher) Fetch(url string) (io.ReadCloser, error) {
+	resp, err := h.client.Get(url)
+	if err != nil {
+		return nil, err
+	}
+	if resp.StatusCode != http.StatusOK {
+		resp.Body.Close()
+		return nil, fmt.Errorf("unexpected status %d", resp.StatusCode)
+	}
+	return resp.Body, nil
+}
+
+// Scrape fetches the AAC events page using f and returns events on target date.
+func Scrape(f Fetcher, target time.Time) ([]event.Event, error) {
+	body, err := f.Fetch("https://www.americanairlinescenter.com/events")
 	if err != nil {
 		return nil, fmt.Errorf("%w: %v", ErrScrape, err)
 	}
-	defer resp.Body.Close()
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("%w: unexpected status %d", ErrScrape, resp.StatusCode)
-	}
-	return parseEvents(resp.Body, target)
+	defer body.Close()
+	return parseEvents(body, target)
 }
 
 func parseEvents(r io.Reader, target time.Time) ([]event.Event, error) {

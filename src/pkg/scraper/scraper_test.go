@@ -1,12 +1,26 @@
 package scraper
 
 import (
+	"errors"
+	"io"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/cjohnhelms/sentinel/pkg/event"
 )
+
+type fakeFetcher struct {
+	body string
+	err  error
+}
+
+func (f *fakeFetcher) Fetch(_ string) (io.ReadCloser, error) {
+	if f.err != nil {
+		return nil, f.err
+	}
+	return io.NopCloser(strings.NewReader(f.body)), nil
+}
 
 var target = time.Date(2026, 4, 9, 0, 0, 0, 0, time.UTC)
 
@@ -41,6 +55,28 @@ const fixtureMalformedDate = `<!DOCTYPE html>
   <h3><a href="/events/detail/test2">Valid Event</a></h3>
 </div>
 </body></html>`
+
+func TestScrape_returnsTodayEvents(t *testing.T) {
+	f := &fakeFetcher{body: fixtureWithEvent}
+	got, err := Scrape(f, target)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("got %d events, want 1", len(got))
+	}
+	if got[0].Title != "Dallas Stars vs. Colorado Avalanche" {
+		t.Errorf("title = %q", got[0].Title)
+	}
+}
+
+func TestScrape_fetchError(t *testing.T) {
+	f := &fakeFetcher{err: errors.New("connection refused")}
+	_, err := Scrape(f, target)
+	if !errors.Is(err, ErrScrape) {
+		t.Errorf("expected ErrScrape, got %v", err)
+	}
+}
 
 func TestParseEvents(t *testing.T) {
 	tests := []struct {
