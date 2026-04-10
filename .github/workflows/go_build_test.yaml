@@ -22,7 +22,7 @@ jobs:
     - name: Build
       run: |
         cd src
-        go build -v ./cmd/lambda/main.go
+        go build -v ./cmd/main.go
 
     - name: Test
       run: |
